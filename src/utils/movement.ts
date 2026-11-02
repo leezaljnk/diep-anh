@@ -7,6 +7,24 @@ interface Bounds {
   height: number;
 }
 
+export type MoveDirection = 'left' | 'right' | 'up' | 'down';
+
+export function getKeyboardMove(
+  x: number,
+  y: number,
+  held: ReadonlySet<MoveDirection>,
+  elapsedMs: number
+) {
+  // Cap catch-up after a stalled/hidden frame; retain the original speed at 60 Hz.
+  const frames = Math.max(0, Math.min(elapsedMs, 50)) / (1000 / 60);
+  const dx = Number(held.has('right')) - Number(held.has('left'));
+  const dy = (held.has('down') ? 0.35 : 0) - (held.has('up') ? 0.32 : 0);
+  return {
+    x: Math.max(4, Math.min(96, x + dx * 0.38 * frames)),
+    y: Math.max(44, Math.min(100, y + dy * frames)),
+  };
+}
+
 export function getCommandMoveDuration(
   startX: number,
   startY: number,

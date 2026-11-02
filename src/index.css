@@ -1,1 +1,376 @@
 @import "tailwindcss";
+
+@keyframes trash-pickup {
+  0%, 40% {
+    opacity: 1;
+    transform: translate(0, 0) rotate(var(--pickup-rotation)) scale(1);
+  }
+  70% { opacity: 1; }
+  100% {
+    opacity: 0;
+    transform: translate(var(--pickup-x), var(--pickup-y)) rotate(0deg) scale(0.35);
+  }
+}
+
+@keyframes mascot-pickup-blend {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+.trash-pickup {
+  animation: trash-pickup var(--pickup-duration) cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+.trash-pickup > div:last-child {
+  visibility: hidden;
+}
+
+.mascot-pickup-previous {
+  animation: mascot-pickup-blend 90ms ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .trash-pickup { animation: none; }
+  .mascot-pickup-previous { animation: none; opacity: 0; }
+}
+
+.mobile-classroom-controls {
+  display: none;
+}
+
+.reuse-hint-card {
+  bottom: calc(35% + 0.75rem);
+  right: 0.75rem;
+  width: clamp(9rem, 23vw, 15rem);
+}
+
+.reuse-hint-image {
+  width: clamp(3rem, 7vw, 6rem);
+  height: clamp(3rem, 7vw, 6rem);
+}
+
+@media (max-height: 560px) {
+  .reuse-hint-card {
+    width: 12rem;
+  }
+
+  .reuse-hint-image {
+    float: left;
+    margin-right: 0.5rem;
+    width: 3rem;
+    height: 3rem;
+  }
+}
+
+.mobile-game-root {
+  height: 100vh;
+  height: 100dvh;
+}
+
+@media (pointer: coarse) {
+  .mobile-classroom-board {
+    left: 50%;
+    width: 94%;
+    height: 58%;
+    max-height: 225px;
+  }
+
+  .mobile-classroom-desks {
+    display: none;
+  }
+
+  .mobile-game-root [data-trash-play-area] {
+    height: 52%;
+  }
+
+  .reuse-hint-card {
+    bottom: calc(52% + 0.75rem);
+  }
+
+  .mobile-game-bin {
+    scale: 0.78;
+  }
+
+  .mobile-game-mascot [data-robot-sprite] {
+    scale: 0.82;
+    transform-origin: bottom center;
+  }
+
+  .mobile-game-trash-item {
+    scale: 0.94;
+  }
+
+  .mobile-classroom-controls {
+    position: absolute;
+    z-index: 45;
+    left: 50%;
+    bottom: 0.4rem;
+    display: grid;
+    grid-template: repeat(3, 2.65rem) / repeat(3, 2.65rem);
+    gap: 0.1rem;
+    padding: 0.25rem;
+    transform: translateX(-50%);
+    border: 1px solid rgb(255 255 255 / 75%);
+    border-radius: 1.25rem;
+    background: rgb(15 23 42 / 52%);
+    box-shadow: 0 4px 14px rgb(15 23 42 / 30%);
+    touch-action: none;
+  }
+
+  .mobile-classroom-control {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.65rem;
+    height: 2.65rem;
+    border: 2px solid #047857;
+    border-radius: 0.85rem;
+    background: rgb(255 255 255 / 96%);
+    color: #064e3b;
+    font-size: 1.5rem;
+    font-weight: 900;
+    box-shadow: 0 2px 5px rgb(15 23 42 / 22%);
+    touch-action: none;
+    user-select: none;
+  }
+
+  .mobile-classroom-control:active {
+    transform: scale(0.94);
+    background: #d1fae5;
+  }
+
+  .mobile-classroom-action {
+    border-color: #c2410c;
+    background: #ffedd5;
+    font-size: 1.2rem;
+  }
+}
+
+@media (pointer: coarse) and (orientation: landscape) and (max-height: 560px) {
+  .mobile-game-root > header {
+    flex-wrap: nowrap;
+    gap: 0.35rem;
+    padding: 0.2rem 0.5rem;
+  }
+
+  .mobile-game-root > header > div:first-child {
+    gap: 0.4rem;
+  }
+
+  .mobile-game-root > header > div:first-child > button {
+    width: 2.25rem;
+    height: 2.25rem;
+  }
+
+  .mobile-game-root > header h1 {
+    font-size: 0.85rem;
+  }
+
+  .mobile-game-root > header > div:nth-child(2) button {
+    gap: 0.2rem;
+    padding: 0.3rem 0.45rem;
+    font-size: 0.625rem;
+  }
+
+  .mobile-game-root > header > div:nth-child(3) {
+    gap: 0.35rem;
+    padding: 0.25rem 0.45rem;
+  }
+
+  .mobile-game-root > header > div:nth-child(4) > button:not(:last-child) {
+    display: none;
+  }
+
+  .mobile-game-bin {
+    scale: 0.68;
+  }
+
+  .mobile-game-mascot [data-robot-sprite] {
+    scale: 0.72;
+  }
+
+  .mobile-game-trash-item {
+    scale: 1;
+  }
+
+  .mobile-classroom-controls {
+    grid-template: repeat(3, 2.3rem) / repeat(3, 2.3rem);
+  }
+
+  .mobile-classroom-control {
+    width: 2.3rem;
+    height: 2.3rem;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1200px) {
+  .mobile-classroom-board {
+    left: 50%;
+    width: calc(100% - 22rem);
+    height: 58%;
+    max-height: 225px;
+  }
+
+  .mobile-game-trash-item {
+    scale: 0.92;
+  }
+}
+
+@media (max-width: 767px) {
+  .mobile-classroom-board {
+    width: 94%;
+  }
+}
+
+@media (max-height: 560px) {
+  .mobile-classroom-board {
+    height: 32%;
+    max-height: 170px;
+  }
+}
+
+@media (pointer: coarse) and (max-width: 900px) {
+  .garden-return-button,
+  .garden-title {
+    top: max(0.5rem, env(safe-area-inset-top));
+    padding: 0.45rem 0.75rem;
+    font-size: 0.75rem;
+  }
+
+  .garden-hud {
+    top: 3.25rem;
+    width: min(20rem, calc(100% - 1.5rem));
+    gap: 0.2rem;
+    padding: 0.5rem 0.75rem;
+    border-width: 1px;
+  }
+
+  .garden-sun {
+    width: 5.5rem;
+    height: 5.5rem;
+  }
+
+  .garden-scenery-tree {
+    transform: scale(0.68);
+    transform-origin: bottom center;
+  }
+
+  .garden-falling-item {
+    width: 2.75rem;
+    height: 2.75rem;
+    font-size: 1.75rem;
+  }
+
+  .garden-controls {
+    bottom: max(0.5rem, env(safe-area-inset-bottom));
+    gap: 0.65rem;
+  }
+
+  .garden-controls button {
+    width: 3rem;
+    height: 3rem;
+    border-radius: 0.9rem;
+    font-size: 1.6rem;
+  }
+
+  .garden-mascot [data-robot-sprite] {
+    scale: 0.78;
+    transform-origin: bottom center;
+  }
+
+  .garden-start-overlay {
+    padding: 0.75rem;
+  }
+
+  .garden-start-card {
+    width: min(34rem, 100%);
+    max-height: calc(100dvh - 1.5rem);
+    overflow-y: auto;
+    border-width: 2px;
+    border-radius: 1.25rem;
+    padding: 1rem;
+  }
+
+  .garden-start-card > div:first-child {
+    margin-bottom: 0.25rem;
+    font-size: 2rem;
+  }
+
+  .garden-start-card h1 {
+    font-size: 1.35rem;
+    line-height: 1.2;
+  }
+
+  .garden-start-card > p {
+    margin-top: 0.5rem;
+    font-size: 0.875rem;
+    line-height: 1.35;
+  }
+
+  .garden-start-actions {
+    margin-top: 0.75rem;
+    gap: 0.5rem;
+  }
+
+  .garden-start-button {
+    min-height: 3rem;
+    border-radius: 0.9rem;
+    padding: 0.6rem 0.75rem;
+  }
+
+  .garden-start-button > span:first-child {
+    font-size: 0.95rem;
+  }
+
+  .garden-start-button > span:last-child {
+    font-size: 0.75rem;
+    line-height: 1.25;
+  }
+}
+
+@media (pointer: coarse) and (max-width: 900px) and (orientation: landscape) and (max-height: 560px) {
+  .garden-hud {
+    top: 3rem;
+    width: min(18rem, calc(100% - 13rem));
+    padding: 0.35rem 0.6rem;
+  }
+
+  .garden-hud > p:first-child {
+    font-size: 0.8rem;
+  }
+
+  .garden-hud > p:nth-child(2) {
+    font-size: 0.7rem;
+  }
+
+  .garden-start-card {
+    width: min(35rem, calc(100% - 1rem));
+    padding: 0.75rem 1rem;
+  }
+
+  .garden-start-card > div:first-child {
+    display: none;
+  }
+
+  .garden-start-card h1 {
+    font-size: 1.15rem;
+  }
+
+  .garden-start-card > p {
+    margin-top: 0.35rem;
+    font-size: 0.8rem;
+  }
+
+  .garden-start-actions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    margin-top: 0.6rem;
+  }
+
+  .garden-start-button {
+    min-height: 2.75rem;
+  }
+
+  .garden-start-button > span:last-child {
+    display: none;
+  }
+}

@@ -4,8 +4,9 @@
  * 2. Nhóm cầm rác (15 nhóm × 12 ảnh = 180 ảnh):
  *    - Vô cơ: vo_hop_sua, vo_hop_giay, giay_cu, vo_chai, ong_nhua, vo_keo, vo_lon, vo_chai_nhua
  *    - Hữu cơ: xuong_ca, dui_ga, vo_dua_hau, banh_mi, la_cay, vo_chuoi, vo_tao
- * 3. Nhóm vui mừng: vui_01, vui_02
- * 4. Nhóm buồn: buon_01, buon_02
+ * 3. Nhóm vui mừng: vui_01 .. vui_04
+ * 4. Nhóm buồn: buon_01 .. buon_04
+ * 5. Nhóm cúi nhặt rác: tim_rac_13 .. tim_rac_15
  */
 
 import type { CustomCostumesMap } from '../types';
@@ -13,7 +14,7 @@ import type { CustomCostumesMap } from '../types';
 export interface CostumeDef {
   id: string;
   nameVi: string;
-  actionGroup: 'tim_rac' | 'cam_rac' | 'vui' | 'buon';
+  actionGroup: 'tim_rac' | 'picking' | 'cam_gio' | 'cam_rac' | 'vui' | 'buon';
   trashId?: string; // Nếu thuộc nhóm cầm rác
   groupNameVi: string;
   scratchRoleVi: string;
@@ -28,6 +29,16 @@ export const TIM_RAC_IDS: string[] = Array.from({ length: 12 }, (_, i) => {
   return `tim_rac_${num}`;
 });
 
+export const CAM_GIO_IDS: string[] = Array.from({ length: 12 }, (_, index) =>
+  `cam_gio_${String(index + 1).padStart(2, '0')}`
+);
+
+export const PICKUP_IDS = ['tim_rac_13', 'tim_rac_14', 'tim_rac_15'];
+export const PICKUP_FRAME_MS = 180;
+export const PICKUP_DURATION_MS = PICKUP_IDS.length * PICKUP_FRAME_MS;
+export const VUI_IDS = ['vui_01', 'vui_02', 'vui_03', 'vui_04'];
+export const BUON_IDS = ['buon_01', 'buon_02', 'buon_03', 'buon_04'];
+
 export function getPrimaryMascotImage(
   costumes: CustomCostumesMap,
   ...baseImages: (string | null | undefined)[]
@@ -37,7 +48,7 @@ export function getPrimaryMascotImage(
 
   // Older saves may have copied a carrying/emotion frame into the base mascot slot.
   const actionImages = new Set(Object.entries(costumes)
-    .filter(([id, image]) => image && /^(cam_|vui_|buon_)/.test(id))
+    .filter(([id, image]) => image && (/^(cam_|vui_|buon_)/.test(id) || PICKUP_IDS.includes(id)))
     .map(([, image]) => image));
   return [...baseImages, costumes['k-v-2']]
     .find(image => image && !actionImages.has(image)) || null;
@@ -105,12 +116,38 @@ export const MASCOT_COSTUMES: CostumeDef[] = (() => {
     });
   });
 
-  // 2. Nhóm cảm xúc Vui & Buồn (4 ảnh)
+  PICKUP_IDS.forEach((id, index) => {
+    list.push({
+      id,
+      nameVi: `Cúi nhặt rác bước ${index + 1}`,
+      actionGroup: 'picking',
+      groupNameVi: 'Cúi nhặt rác (tim_rac_13..15)',
+      scratchRoleVi: `Cúi nhặt rác bước ${index + 1}/3`,
+      descriptionVi: 'Kiến Sáng cúi xuống nhặt rác trước khi ôm rác tới thùng.',
+      order: order++,
+      sampleFileName: `${id}.png`,
+    });
+  });
+
+  CAM_GIO_IDS.forEach((id, index) => {
+    list.push({
+      id,
+      nameVi: `Cầm giỏ bước ${index + 1}`,
+      actionGroup: 'cam_gio',
+      groupNameVi: 'Cầm giỏ (cam_gio_01..12)',
+      scratchRoleVi: `Cầm giỏ bước ${index + 1}/12`,
+      descriptionVi: 'Kiến Sáng cầm giỏ đón món ngon trong khu vườn.',
+      order: order++,
+      sampleFileName: `${id}.png`,
+    });
+  });
+
+  // 2. Nhóm cảm xúc Vui & Buồn (8 ảnh)
   list.push({
     id: 'vui_01',
     nameVi: 'Vui mừng 01 (Giơ tay chữ V)',
     actionGroup: 'vui',
-    groupNameVi: '🎉 Vui mừng khi bỏ đúng (vui_01..02)',
+    groupNameVi: '🎉 Vui mừng khi bỏ đúng (vui_01..04)',
     scratchRoleVi: 'Ăn mừng chiến thắng 1',
     descriptionVi: 'Giơ hai tay chữ V reo mừng bé bỏ rác đúng thùng!',
     order: order++,
@@ -120,7 +157,7 @@ export const MASCOT_COSTUMES: CostumeDef[] = (() => {
     id: 'vui_02',
     nameVi: 'Vui mừng 02 (Nhảy múa tít mắt)',
     actionGroup: 'vui',
-    groupNameVi: '🎉 Vui mừng khi bỏ đúng (vui_01..02)',
+    groupNameVi: '🎉 Vui mừng khi bỏ đúng (vui_01..04)',
     scratchRoleVi: 'Ăn mừng chiến thắng 2',
     descriptionVi: 'Nhảy múa cười tít mắt khen bé thật thông minh!',
     order: order++,
@@ -131,7 +168,7 @@ export const MASCOT_COSTUMES: CostumeDef[] = (() => {
     id: 'buon_01',
     nameVi: 'Buồn bã 01 (Gãi đầu áy náy)',
     actionGroup: 'buon',
-    groupNameVi: '🥺 Buồn khi bỏ sai (buon_01..02)',
+    groupNameVi: '🥺 Buồn khi bỏ sai (buon_01..04)',
     scratchRoleVi: 'Tiếc nuối nhầm thùng 1',
     descriptionVi: 'Cúi đầu gãi tai áy náy: Ôi nhầm rồi bạn ơi!',
     order: order++,
@@ -141,12 +178,31 @@ export const MASCOT_COSTUMES: CostumeDef[] = (() => {
     id: 'buon_02',
     nameVi: 'Buồn bã 02 (Lau nước mắt tiếc nuối)',
     actionGroup: 'buon',
-    groupNameVi: '🥺 Buồn khi bỏ sai (buon_01..02)',
+    groupNameVi: '🥺 Buồn khi bỏ sai (buon_01..04)',
     scratchRoleVi: 'Tiếc nuối nhầm thùng 2',
     descriptionVi: 'Lau nước mắt tiếc nuối và động viên bạn thử lại!',
     order: order++,
     sampleFileName: 'buon_02.png',
   });
+
+  for (const actionGroup of ['vui', 'buon'] as const) {
+    const ids = actionGroup === 'vui' ? VUI_IDS : BUON_IDS;
+    ids.slice(2).forEach((id, index) => {
+      const name = actionGroup === 'vui' ? 'Vui mừng' : 'Buồn bã';
+      list.push({
+        id,
+        nameVi: `${name} ${index + 3}`,
+        actionGroup,
+        groupNameVi: actionGroup === 'vui'
+          ? '🎉 Vui mừng khi bỏ đúng (vui_01..04)'
+          : '🥺 Buồn khi bỏ sai (buon_01..04)',
+        scratchRoleVi: `${name} bước ${index + 3}/4`,
+        descriptionVi: `Biểu cảm ${name.toLowerCase()} của Kiến Sáng.`,
+        order: order++,
+        sampleFileName: `${id}.png`,
+      });
+    });
+  }
 
   // 3. Nhóm Cầm rác (15 nhóm × 12 ảnh)
   CARRY_TRASH_GROUPS.forEach((group) => {
@@ -561,10 +617,10 @@ export function getCostumeSvg(costumeId?: string | null): string {
   }
 
   // 2. Nhóm Vui / Buồn
-  if (costumeId === 'vui_01' || costumeId === 'k-v-1') return createVuiSvg(1);
-  if (costumeId === 'vui_02' || costumeId === 'k-v-2' || costumeId === 'k-v-3') return createVuiSvg(2);
-  if (costumeId === 'buon_01' || costumeId === 'k-l-1') return createBuonSvg(1);
-  if (costumeId === 'buon_02' || costumeId === 'k-l-2') return createBuonSvg(2);
+  if (costumeId === 'vui_01' || costumeId === 'vui_03' || costumeId === 'k-v-1') return createVuiSvg(1);
+  if (costumeId === 'vui_02' || costumeId === 'vui_04' || costumeId === 'k-v-2' || costumeId === 'k-v-3') return createVuiSvg(2);
+  if (costumeId === 'buon_01' || costumeId === 'buon_03' || costumeId === 'k-l-1') return createBuonSvg(1);
+  if (costumeId === 'buon_02' || costumeId === 'buon_04' || costumeId === 'k-l-2') return createBuonSvg(2);
 
   // 3. Nhóm Cầm rác (cam_[trashId]_[01..12])
   if (costumeId.startsWith('cam_')) {

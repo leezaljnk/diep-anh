@@ -1,0 +1,27 @@
+- dialog [ref=e3]:
+  - generic [aria-hidden]:
+    - generic: 🍃
+    - generic: ✨
+    - generic: 🌼
+    - generic: ♻️
+  - generic [ref=e4]:
+    - generic [ref=e5]:
+      - generic [ref=e6]: Dự án học tập · FPT Cầu Giấy
+      - img "FPT Schools" [ref=e7]
+      - heading "Xin chào! Cùng Kiến Sáng giữ môi trường sạch đẹp" [level=1] [ref=e8]:
+        - text: Xin chào!
+        - generic [ref=e9]: Cùng Kiến Sáng giữ môi trường sạch đẹp
+      - paragraph [ref=e10]:
+        - text: Chào mừng bạn đến với dự án
+        - strong [ref=e11]: Robot Kiến Sáng – Thử tài Phân loại Rác
+        - text: . Cùng Kiến Sáng phân loại rác và chăm sóc lớp học, sân trường xanh – sạch – đẹp nhé!
+      - generic [ref=e12]:
+        - generic [ref=e13]: Diệp Anh
+        - generic [ref=e14]: Hải Quân
+        - generic [ref=e15]: Phúc Hưng
+      - generic [ref=e16]:
+        - button "Đang chuẩn bị trò chơi…" [disabled] [ref=e17]
+        - status [ref=e18]: Đang tải hình ảnh và chuẩn bị khu vui chơi…
+    - generic [ref=e20]:
+      - img "Ba thành viên nhóm dự án FPT Schools" [ref=e22]
+      - generic [ref=e23]: Học vui · Sống xanh 🌱

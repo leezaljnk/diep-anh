@@ -11,11 +11,17 @@ import {
   FolderUp,
   Gamepad2,
   Shirt,
+  Hand,
 } from 'lucide-react';
 import { CustomCostumesMap } from '../types';
 import {
   MASCOT_COSTUMES,
   TIM_RAC_IDS,
+  CAM_GIO_IDS,
+  PICKUP_IDS,
+  PICKUP_FRAME_MS,
+  VUI_IDS,
+  BUON_IDS,
   CARRY_TRASH_GROUPS,
   getCarryCostumeIdsForTrash,
   getCostumeSvg,
@@ -33,7 +39,7 @@ interface MascotCostumesModalProps {
   onUpdateScale: (scale: number) => void;
 }
 
-type TabFilter = 'tim_rac' | 'cam_rac' | 'emotions' | 'all';
+type TabFilter = 'tim_rac' | 'picking' | 'cam_gio' | 'cam_rac' | 'emotions' | 'all';
 
 export const MascotCostumesModal: React.FC<MascotCostumesModalProps> = ({
   isOpen,
@@ -53,7 +59,7 @@ export const MascotCostumesModal: React.FC<MascotCostumesModalProps> = ({
   const [isSaving, setIsSaving] = useState(false);
 
   // Animation previewer state
-  const [previewMode, setPreviewMode] = useState<'tim_rac' | 'cam_rac' | 'vui' | 'buon'>('tim_rac');
+  const [previewMode, setPreviewMode] = useState<'tim_rac' | 'picking' | 'cam_gio' | 'cam_rac' | 'vui' | 'buon'>('tim_rac');
   const [previewCarryTrashId, setPreviewCarryTrashId] = useState<string>('banh_mi');
   const [isPlayingPreview, setIsPlayingPreview] = useState(true);
   const [isKeyHoldSimulated, setIsKeyHoldSimulated] = useState(false);
@@ -101,8 +107,10 @@ export const MascotCostumesModal: React.FC<MascotCostumesModalProps> = ({
   const currentPreviewFrames = useMemo(() => {
     try {
       if (previewMode === 'tim_rac') return TIM_RAC_IDS || [];
-      if (previewMode === 'vui') return ['vui_01', 'vui_02'];
-      if (previewMode === 'buon') return ['buon_01', 'buon_02'];
+      if (previewMode === 'cam_gio') return CAM_GIO_IDS;
+      if (previewMode === 'picking') return PICKUP_IDS;
+      if (previewMode === 'vui') return VUI_IDS;
+      if (previewMode === 'buon') return BUON_IDS;
       if (previewMode === 'cam_rac') {
         const frames = getCarryCostumeIdsForTrash(previewCarryTrashId);
         return frames && frames.length > 0 ? frames : TIM_RAC_IDS;
@@ -123,9 +131,9 @@ export const MascotCostumesModal: React.FC<MascotCostumesModalProps> = ({
     }
 
     const intervalMs =
-      previewMode === 'tim_rac' || previewMode === 'cam_rac'
+      previewMode === 'tim_rac' || previewMode === 'cam_gio' || previewMode === 'cam_rac'
         ? 85
-        : 220; // 85ms per step in walk cycle
+        : previewMode === 'picking' ? PICKUP_FRAME_MS : 220; // 85ms per step in walk cycle
 
     const timer = setInterval(() => {
       setPreviewFrameIndex((prev) => {
@@ -159,11 +167,14 @@ export const MascotCostumesModal: React.FC<MascotCostumesModalProps> = ({
     if (clean === 'buon_01' || clean === 'buon01' || clean === 'buon_1' || clean === 'k-l-1') return 'buon_01';
     if (clean === 'buon_02' || clean === 'buon02' || clean === 'buon_2' || clean === 'k-l-2') return 'buon_02';
 
+    const emotionMatch = clean.match(/^(vui|buon)[_-]?0?([1-4])$/);
+    if (emotionMatch) return `${emotionMatch[1]}_0${emotionMatch[2]}`;
+
     // 2. Nhóm Tìm Rác (tim_rac_01 .. 12)
     const matchTimRac = clean.match(/tim[_-]?rac[_-]?(\d{1,2})/);
     if (matchTimRac) {
       const num = parseInt(matchTimRac[1], 10);
-      if (num >= 1 && num <= 12) {
+      if (num >= 1 && num <= 15) {
         return `tim_rac_${String(num).padStart(2, '0')}`;
       }
     }
@@ -264,7 +275,7 @@ export const MascotCostumesModal: React.FC<MascotCostumesModalProps> = ({
       );
     } else {
       setUploadNotice(
-        `Chưa nhận diện được file nào. Đặt tên mẫu: tim_rac_01.png .. tim_rac_12.png hoặc cam_banh_mi_01.png .. 12, vui_01.png, v.v.`
+        `Chưa nhận diện được file nào. Đặt tên mẫu: tim_rac_01.png .. 15, cam_gio_01.png .. 12, cam_banh_mi_01.png .. 12, vui_01.png .. 04, buon_01.png .. 04.`
       );
     }
   };
@@ -352,6 +363,12 @@ export const MascotCostumesModal: React.FC<MascotCostumesModalProps> = ({
 
   // Filter costumes based on active tab and selected carry group
   const displayCostumes: CostumeDef[] = useMemo(() => {
+    if (activeTab === 'picking') {
+      return MASCOT_COSTUMES.filter((costume) => costume.actionGroup === 'picking');
+    }
+    if (activeTab === 'cam_gio') {
+      return MASCOT_COSTUMES.filter((costume) => costume.actionGroup === 'cam_gio');
+    }
     if (activeTab === 'tim_rac') {
       return MASCOT_COSTUMES.filter((c) => c.actionGroup === 'tim_rac');
     }
@@ -420,7 +437,7 @@ export const MascotCostumesModal: React.FC<MascotCostumesModalProps> = ({
                   </span>
                 </div>
                 <p className="text-xs sm:text-sm font-semibold text-yellow-100">
-                  12 bước tìm rác (tim_rac_01..12) • 15 nhóm cầm rác (12 bước/loại) • Vui & Buồn
+                  Tìm rác • Cúi nhặt • Cầm giỏ • 15 nhóm cầm rác • Vui & Buồn
                 </p>
               </div>
             </div>
@@ -488,9 +505,11 @@ export const MascotCostumesModal: React.FC<MascotCostumesModalProps> = ({
                     className="text-xs font-black bg-orange-50 border border-orange-300 text-orange-900 rounded-lg px-2 py-1 outline-none cursor-pointer"
                   >
                     <option value="tim_rac">🚶 12 bước tìm rác (tim_rac_01..12)</option>
+                    <option value="picking">Cúi nhặt rác (tim_rac_13..15)</option>
+                    <option value="cam_gio">Cầm giỏ (cam_gio_01..12)</option>
                     <option value="cam_rac">📦 Cầm rác di chuyển (12 bước)</option>
-                    <option value="vui">🎉 Vui mừng đúng thùng (vui_01..02)</option>
-                    <option value="buon">🥺 Buồn khi sai thùng (buon_01..02)</option>
+                    <option value="vui">🎉 Vui mừng đúng thùng (vui_01..04)</option>
+                    <option value="buon">🥺 Buồn khi sai thùng (buon_01..04)</option>
                   </select>
 
                   {previewMode === 'cam_rac' && (
@@ -570,7 +589,7 @@ export const MascotCostumesModal: React.FC<MascotCostumesModalProps> = ({
               <button
                 onClick={() => fileInputFolderRef.current?.click()}
                 className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-black shadow-md transition active:scale-95 cursor-pointer"
-                title="Tải nguyên một thư mục ảnh có chứa tim_rac_01..12, cam_banh_mi_01..12, v.v."
+                title="Tải nguyên một thư mục ảnh có chứa tim_rac_01..15, vui_01..04, buon_01..04, cam_gio_01..12, v.v."
               >
                 <FolderUp className="w-4 h-4" />
                 <span>Tải cả thư mục</span>
@@ -605,6 +624,44 @@ export const MascotCostumesModal: React.FC<MascotCostumesModalProps> = ({
               </button>
 
               <button
+                onClick={() => {
+                  setActiveTab('picking');
+                  setPreviewMode('picking');
+                  setPreviewFrameIndex(0);
+                }}
+                className={`flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-black transition cursor-pointer ${
+                  activeTab === 'picking'
+                    ? 'bg-orange-600 text-white shadow-sm'
+                    : 'bg-amber-50 text-amber-900 hover:bg-amber-100'
+                }`}
+              >
+                <Hand className="w-3.5 h-3.5" />
+                <span>Cúi nhặt</span>
+                <span className="px-1.5 rounded-full text-[10px] bg-white/30">
+                  {PICKUP_IDS.filter(id => !!safeCostumes[id]).length}/3
+                </span>
+              </button>
+
+              <button
+                onClick={() => {
+                  setActiveTab('cam_gio');
+                  setPreviewMode('cam_gio');
+                  setPreviewFrameIndex(0);
+                }}
+                className={`flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-black transition cursor-pointer ${
+                  activeTab === 'cam_gio'
+                    ? 'bg-orange-600 text-white shadow-sm'
+                    : 'bg-amber-50 text-amber-900 hover:bg-amber-100'
+                }`}
+              >
+                <Shirt className="w-3.5 h-3.5" />
+                <span>Cầm giỏ</span>
+                <span className="px-1.5 rounded-full text-[10px] bg-white/30">
+                  {CAM_GIO_IDS.filter(id => !!safeCostumes[id]).length}/12
+                </span>
+              </button>
+
+              <button
                 onClick={() => setActiveTab('cam_rac')}
                 className={`flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-black transition cursor-pointer ${
                   activeTab === 'cam_rac'
@@ -623,7 +680,7 @@ export const MascotCostumesModal: React.FC<MascotCostumesModalProps> = ({
                     : 'bg-emerald-50 text-emerald-900 hover:bg-emerald-100'
                 }`}
               >
-                <span>🎉 Vui & 🥺 Buồn (4 ảnh)</span>
+                <span>🎉 Vui & 🥺 Buồn (8 ảnh)</span>
               </button>
 
               <button
@@ -682,7 +739,7 @@ export const MascotCostumesModal: React.FC<MascotCostumesModalProps> = ({
                 <Upload className="w-12 h-12 animate-bounce" />
                 <span>Thả các file ảnh vào đây để tự động nhận diện theo tên!</span>
                 <span className="text-xs font-normal text-yellow-100">
-                  Hỗ trợ tim_rac_01..12, cam_banh_mi_01..12, cam_hopsua_01..12, vui_01, buon_01, v.v.
+                  Hỗ trợ tim_rac_01..15, cam_gio_01..12, cam_banh_mi_01..12, vui_01..04, buon_01..04, v.v.
                 </span>
               </div>
             )}

@@ -1,6 +1,11 @@
 import React from 'react';
 
-export const ClassroomBackground: React.FC = () => {
+interface ClassroomBackgroundProps {
+  onVisitYard: () => void;
+  onVisitGarden: () => void;
+}
+
+export const ClassroomBackground: React.FC<ClassroomBackgroundProps> = ({ onVisitYard, onVisitGarden }) => {
   return (
     <div className="absolute inset-0 pointer-events-none select-none overflow-hidden">
       {/* Tường lớp học lớp 1 - màu vàng kem ấm áp */}
@@ -10,7 +15,7 @@ export const ClassroomBackground: React.FC = () => {
       </div>
 
       {/* Sàn lớp học - gạch men sạch sáng bóng */}
-      <div className="absolute inset-x-0 bottom-0 h-[35%] bg-gradient-to-b from-[#E2E8F0] via-[#CBD5E1] to-[#94A3B8]">
+      <div data-trash-play-area className="absolute inset-x-0 bottom-0 h-[35%] bg-gradient-to-b from-[#E2E8F0] via-[#CBD5E1] to-[#94A3B8]">
         {/* Kẻ ô gạch hoa lớp học */}
         <div
           className="absolute inset-0 opacity-25"
@@ -22,22 +27,46 @@ export const ClassroomBackground: React.FC = () => {
       </div>
 
       {/* Cửa sổ lớp học bên góc trái */}
-      <div className="absolute top-6 left-6 hidden md:block w-36 h-48 bg-sky-100 rounded-t-full border-4 border-amber-800 shadow-md overflow-hidden opacity-90">
+      <div className="classroom-window absolute top-6 left-6 hidden md:block w-36 h-48 bg-sky-100 rounded-t-full border-4 border-amber-800 shadow-md overflow-hidden opacity-90">
         <div className="absolute inset-0 bg-gradient-to-b from-sky-300 to-sky-100 flex flex-col justify-end items-center pb-2">
           {/* Cành phượng đỏ mùa hè ngoài sân trường */}
           <div className="text-2xl animate-pulse">🌿🌸</div>
           <span className="text-[10px] font-bold text-sky-800 bg-white/70 px-1 rounded mt-1">Sân trường</span>
         </div>
+        <button
+          type="button"
+          aria-label="Đi ra sân trường"
+          title="Bấm để ra sân trường"
+          onClick={onVisitYard}
+          className="pointer-events-auto absolute inset-0 z-10 cursor-pointer rounded-t-full bg-transparent focus-visible:outline focus-visible:outline-4 focus-visible:outline-yellow-400"
+        />
         {/* Khung ô cửa sổ */}
-        <div className="absolute inset-0 border-r-2 border-b-2 border-amber-800" style={{ left: '50%', top: '50%' }} />
+        <div className="pointer-events-none absolute inset-0 z-20 border-r-2 border-b-2 border-amber-800" style={{ left: '50%', top: '50%' }} />
       </div>
 
       {/* Cửa sổ bên phải */}
-      <div className="absolute top-6 right-6 hidden md:block w-36 h-48 bg-sky-100 rounded-t-full border-4 border-amber-800 shadow-md overflow-hidden opacity-90">
+      <div className="classroom-window absolute top-6 right-6 hidden md:block w-36 h-48 bg-sky-100 rounded-t-full border-4 border-amber-800 shadow-md overflow-hidden opacity-90">
         <div className="absolute inset-0 bg-gradient-to-b from-sky-300 to-amber-50 flex flex-col justify-end items-center pb-2">
           <div className="text-2xl">☀️🌳</div>
           <span className="text-[10px] font-bold text-sky-800 bg-white/70 px-1 rounded mt-1">Nắng ấm</span>
         </div>
+        <button
+          type="button"
+          aria-label="Đến khu vườn Nắng Ấm"
+          title="Bấm để cùng Kiến Sáng dọn rác trong khu vườn"
+          onClick={onVisitGarden}
+          className="pointer-events-auto absolute inset-0 z-10 cursor-pointer rounded-t-full bg-transparent focus-visible:outline focus-visible:outline-4 focus-visible:outline-yellow-400"
+        />
+      </div>
+
+      <div className="absolute right-3 top-3 z-30 md:hidden">
+        <button
+          type="button"
+          onClick={onVisitGarden}
+          className="pointer-events-auto rounded-full border-2 border-amber-700 bg-white/95 px-3 py-2 text-xs font-black text-amber-900 shadow-lg"
+        >
+          ☀️ Khu vườn
+        </button>
       </div>
 
       {/* KHUNG BẢNG ĐEN LỚP HỌC Ở GIỮA */}
@@ -45,7 +74,8 @@ export const ClassroomBackground: React.FC = () => {
         role="region"
         aria-label="Hướng dẫn chơi trên bảng phấn"
         tabIndex={0}
-        className="absolute top-3 left-1/2 -translate-x-1/2 w-[94%] max-w-4xl h-[52%] max-h-72 bg-[#1E293B] rounded-2xl border-[10px] border-[#78350F] shadow-2xl overflow-y-auto pointer-events-auto flex flex-col"
+        data-trash-blocker
+        className="mobile-classroom-board absolute top-3 left-1/2 -translate-x-1/2 w-[94%] max-w-4xl h-[52%] max-h-72 bg-[#1E293B] rounded-2xl border-[10px] border-[#78350F] shadow-2xl overflow-y-auto pointer-events-auto flex flex-col"
       >
         {/* Khung ảnh Bác Hồ & Quốc kỳ ở đỉnh giữa bảng */}
         <div className="relative shrink-0 pt-1 flex items-center justify-center gap-3">
@@ -87,7 +117,10 @@ export const ClassroomBackground: React.FC = () => {
             </div>
             <p className="col-span-2 border-t border-slate-600 pt-1 text-[10px] sm:text-xs leading-snug text-amber-100">
               <span className="font-bold text-amber-200">Cách chơi: </span>
-              Kéo rác vào thùng hoặc chọn rác rồi chọn thùng để nhờ Kiến Sáng.
+              Chạm kéo rác vào thùng hoặc chọn rác rồi chọn thùng để nhờ Kiến Sáng.
+              <br />
+              <span className="font-bold text-amber-200">Điện thoại: </span>
+              Ở chế độ Nhờ Kiến Sáng, dùng các nút mũi tên và nút ✋ để nhặt / thả rác.
               <br />
               <span className="font-bold text-amber-200">Bàn phím: </span>
               Giữ phím mũi tên ⬆️⬇️➡️⬅️️ để di chuyển; Space / Enter để nhặt hoặc thả rác.
@@ -103,10 +136,10 @@ export const ClassroomBackground: React.FC = () => {
       </div>
 
       {/* Dãy bàn ghế học sinh tiểu học gợi cảm giác lớp học */}
-      <div className="absolute bottom-[28%] left-1/2 -translate-x-1/2 w-[85%] max-w-3xl flex justify-around opacity-60">
-        <div className="w-28 h-8 bg-amber-700 rounded-md border-2 border-amber-900 shadow-sm" />
-        <div className="w-28 h-8 bg-amber-700 rounded-md border-2 border-amber-900 shadow-sm hidden sm:block" />
-        <div className="w-28 h-8 bg-amber-700 rounded-md border-2 border-amber-900 shadow-sm" />
+      <div className="mobile-classroom-desks absolute bottom-[28%] left-1/2 -translate-x-1/2 w-[85%] max-w-3xl flex justify-around opacity-60">
+        <div data-trash-blocker className="w-28 h-8 bg-amber-700 rounded-md border-2 border-amber-900 shadow-sm" />
+        <div data-trash-blocker className="w-28 h-8 bg-amber-700 rounded-md border-2 border-amber-900 shadow-sm hidden sm:block" />
+        <div data-trash-blocker className="w-28 h-8 bg-amber-700 rounded-md border-2 border-amber-900 shadow-sm" />
       </div>
     </div>
   );

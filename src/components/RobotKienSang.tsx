@@ -1,19 +1,29 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useSyncExternalStore } from 'react';
+import { createMascotPosition, type MascotPositionStore } from '../utils/mascotPosition';
 import { CustomCostumesMap, KienSangMood, TrashItemDef } from '../types';
 import { Volume2, Shirt } from 'lucide-react';
 import {
   getCostumeSvg,
   TIM_RAC_IDS,
+  CAM_GIO_IDS,
+  PICKUP_IDS,
+  PICKUP_FRAME_MS,
+  VUI_IDS,
+  BUON_IDS,
   getCarryCostumeIdsForTrash,
   getPrimaryMascotImage,
 } from '../data/mascotCostumes';
+import { YardTrashGraphic } from './YardTrashGraphic';
 
 interface RobotKienSangProps {
+  className?: string;
   mood: KienSangMood;
   carriedTrashId?: string | null;
+  carryingBasket?: boolean;
   speechText?: string;
   xPercent?: number; // 0 to 100% position across classroom
   yPercent?: number;
+  positionStore?: MascotPositionStore;
   onReplaySpeech?: () => void;
   isMoving?: boolean;
   walkStepTick?: number;
@@ -22,15 +32,19 @@ interface RobotKienSangProps {
   mascotScale?: number;
   facingDirection?: 'left' | 'right';
   carriedItemDef?: TrashItemDef | null;
+  carriedItemVariant?: number;
   onOpenMascotModal?: () => void;
 }
 
 export const RobotKienSang: React.FC<RobotKienSangProps> = ({
+  className,
   mood,
   carriedTrashId = null,
+  carryingBasket = false,
   speechText = 'Chào bạn nhỏ! Cùng Kiến Sáng dọn sạch lớp học nhé!',
   xPercent = 50,
   yPercent = 75,
+  positionStore,
   onReplaySpeech,
   isMoving = false,
   walkStepTick = 0,
@@ -39,11 +53,40 @@ export const RobotKienSang: React.FC<RobotKienSangProps> = ({
   mascotScale = 1.0,
   facingDirection = 'right',
   carriedItemDef = null,
+  carriedItemVariant = 0,
   onOpenMascotModal,
 }) => {
-  // Đồng bộ bước đi 12 frame tức thời không có độ trễ state kép
+  const fallbackPosition = useMemo(() => createMascotPosition(xPercent, yPercent), [xPercent, yPercent]);
+  const positions = positionStore || fallbackPosition;
+  const position = useSyncExternalStore(positions.subscribe, positions.getSnapshot, positions.getSnapshot);
   const [idlePose, setIdlePose] = useState(true);
-  const [emotionIndex, setEmotionIndex] = useState(0);
+  const [actionFrame, setActionFrame] = useState({ mood, index: 0 });
+  const actionFrameIds = mood === 'picking' ? PICKUP_IDS
+    : mood === 'sad' ? BUON_IDS
+    : mood === 'happy' || mood === 'victory' ? VUI_IDS : null;
+  const actionFrameIndex = actionFrame.mood === mood ? actionFrame.index : 0;
+  const previousPickupImage = mood === 'picking' && actionFrameIndex > 0
+    ? customCostumes[PICKUP_IDS[actionFrameIndex - 1]] : null;
+
+  const carryFrameIds = useMemo(() => carriedTrashId ? getCarryCostumeIdsForTrash(carriedTrashId) : [], [carriedTrashId]);
+  const preloadFrameIds = carryingBasket ? CAM_GIO_IDS : actionFrameIds || (carriedTrashId ? carryFrameIds : TIM_RAC_IDS);
+  useEffect(() => {
+    let cancelled = false;
+    const sources = [...new Set([...preloadFrameIds, ...PICKUP_IDS].map(id => customCostumes[id]).filter((source): source is string => Boolean(source)))];
+    const images: HTMLImageElement[] = [];
+    let next = 0;
+    const warm = async () => {
+      while (!cancelled && next < sources.length) {
+        const image = new Image();
+        images.push(image);
+        image.src = sources[next++];
+        await image.decode().catch(() => {});
+      }
+    };
+    // Warm only the current animation, with bounded parallel downloads.
+    void Promise.all(Array.from({ length: 3 }, warm));
+    return () => { cancelled = true; images.length = 0; };
+  }, [customCostumes, preloadFrameIds]);
 
   useEffect(() => {
     if (isMoving) {
@@ -56,25 +99,33 @@ export const RobotKienSang: React.FC<RobotKienSangProps> = ({
 
   const stepIndex = idlePose && !isMoving ? 0 : Math.abs(walkStepTick) % 12;
 
-  // Timer đổi frame cảm xúc vui mừng (vui_01, vui_02) hoặc buồn (buon_01, buon_02)
   useEffect(() => {
-    setEmotionIndex(0);
-    if (mood !== 'happy' && mood !== 'victory' && mood !== 'sad') return;
+    setActionFrame({ mood, index: 0 });
+    if (!actionFrameIds) return;
 
     const timer = setInterval(() => {
-      setEmotionIndex((prev) => (prev === 0 ? 1 : 0));
-    }, 220);
+      setActionFrame(current => {
+        const index = mood === 'picking'
+          ? Math.min(current.index + 1, actionFrameIds.length - 1)
+          : (current.index + 1) % actionFrameIds.length;
+        return index === current.index ? current : { mood, index };
+      });
+    }, mood === 'picking' ? PICKUP_FRAME_MS : 220);
 
     return () => clearInterval(timer);
-  }, [mood]);
+  }, [mood, actionFrameIds]);
 
   // XÁC ĐỊNH COSTUME ID ĐANG HIỂN THỊ
   let currentCostumeId = 'tim_rac_01';
 
-  if (mood === 'happy' || mood === 'victory') {
-    currentCostumeId = emotionIndex === 0 ? 'vui_01' : 'vui_02';
-  } else if (mood === 'sad') {
-    currentCostumeId = emotionIndex === 0 ? 'buon_01' : 'buon_02';
+  const basketFallback = carryingBasket
+    ? CAM_GIO_IDS.map(id => customCostumes[id]).find(Boolean)
+    : null;
+
+  if (basketFallback) {
+    currentCostumeId = CAM_GIO_IDS[stepIndex];
+  } else if (actionFrameIds) {
+    currentCostumeId = actionFrameIds[actionFrameIndex];
   } else if (carriedTrashId) {
     // ĐANG CẦM RÁC: sử dụng nhóm 12 ảnh cam_[trashId]_01..12 tương ứng với bước chân hiện tại
     const carryFrames = getCarryCostumeIdsForTrash(carriedTrashId);
@@ -89,6 +140,14 @@ export const RobotKienSang: React.FC<RobotKienSangProps> = ({
   // Nguồn ảnh: Ảnh custom tải lên hoặc Vector SVG
   let customFrameImage: string | null = customCostumes[currentCostumeId] || null;
 
+  if (currentCostumeId.startsWith('cam_gio_')) {
+    customFrameImage ||= basketFallback || null;
+  }
+
+  if (!customFrameImage && actionFrameIds && !basketFallback) {
+    customFrameImage = actionFrameIds.map(id => customCostumes[id]).find(Boolean) || null;
+  }
+
   // Nếu frame hiện tại chưa có ảnh riêng nhưng người dùng đã tải bộ trang phục bạn Kiến:
   // Tự động ưu tiên lấy đúng pha bước chân (tim_rac_01..12) hoặc ảnh custom chính để giữ nguyên nhân vật và chuyển động mượt mà
   if (!customFrameImage && primaryCustomMascot) {
@@ -96,29 +155,26 @@ export const RobotKienSang: React.FC<RobotKienSangProps> = ({
     if (currentCostumeId.startsWith('cam_') || currentCostumeId.startsWith('tim_rac_')) {
       customFrameImage = customCostumes[walkFallbackId] || primaryCustomMascot;
     } else if (currentCostumeId.startsWith('vui_')) {
-      customFrameImage = customCostumes['vui_01'] || customCostumes['vui_02'] || primaryCustomMascot;
+      customFrameImage = VUI_IDS.map(id => customCostumes[id]).find(Boolean) || primaryCustomMascot;
     } else if (currentCostumeId.startsWith('buon_')) {
-      customFrameImage = customCostumes['buon_01'] || customCostumes['buon_02'] || primaryCustomMascot;
+      customFrameImage = BUON_IDS.map(id => customCostumes[id]).find(Boolean) || primaryCustomMascot;
     } else {
       customFrameImage = primaryCustomMascot;
     }
   }
 
   // Without walking images, animate the vector frames rather than a static emotion image.
-  if (isMoving && currentCostumeId.startsWith('tim_rac_') &&
+  if (isMoving && TIM_RAC_IDS.includes(currentCostumeId) &&
       !TIM_RAC_IDS.some(id => customCostumes[id])) {
     customFrameImage = null;
   }
 
   return (
     <div
-      className="absolute z-30 select-none pointer-events-none flex flex-col items-center group will-change-[left,top]"
-      style={{
-        left: `${xPercent}%`,
-        top: `${yPercent}%`,
-        transform: 'translate(-50%, -100%)',
-      }}
+      className={`absolute inset-0 z-30 select-none pointer-events-none will-change-transform ${className || ''}`}
+      style={{ transform: `translate3d(${position.x}%, ${position.y}%, 0)` }}
     >
+      <div className="absolute left-0 top-0 flex flex-col items-center group" style={{ transform: 'translate(-50%, -100%)' }}>
       {/* Bong bóng lời nói của Bạn Kiến Sáng */}
       {speechText && (
         <div className="relative mb-2 max-w-xs sm:max-w-sm pointer-events-auto">
@@ -194,8 +250,17 @@ export const RobotKienSang: React.FC<RobotKienSangProps> = ({
                 alt={`Bạn Kiến Sáng - ${currentCostumeId}`}
                 className="w-full h-full object-contain drop-shadow-md select-none pointer-events-none"
               />
+              {previousPickupImage && (
+                <img
+                  key={currentCostumeId}
+                  src={previousPickupImage}
+                  alt=""
+                  aria-hidden="true"
+                  className="mascot-pickup-previous pointer-events-none absolute inset-0 h-full w-full object-contain drop-shadow-md"
+                />
+              )}
               {/* Nếu đang cầm rác nhưng dùng ảnh bước đi chung, hiển thị món rác ôm trước ngực */}
-              {carriedTrashId && carriedItemDef && !customCostumes[currentCostumeId] && (
+              {mood !== 'picking' && carriedTrashId && carriedItemDef && !customCostumes[currentCostumeId] && (
                 <div
                   className="absolute bottom-6 right-1 w-10 h-10 bg-white/95 rounded-xl p-1 shadow-md border-2 border-orange-400 flex items-center justify-center pointer-events-none animate-bounce"
                   style={{ transform: facingDirection === 'left' ? 'scaleX(-1)' : 'none' }}
@@ -206,6 +271,12 @@ export const RobotKienSang: React.FC<RobotKienSangProps> = ({
                       alt={carriedItemDef.nameVi}
                       className="w-full h-full object-contain"
                     />
+                  ) : carriedItemDef.id.startsWith('yard_') ? (
+                    <YardTrashGraphic
+                      iconType={carriedItemDef.iconType}
+                      visualVariant={carriedItemVariant}
+                      className="w-full h-full"
+                    />
                   ) : (
                     <span className="text-xl">
                       {carriedItemDef.category === 'organic' ? '🌱' : '♻️'}
@@ -215,15 +286,30 @@ export const RobotKienSang: React.FC<RobotKienSangProps> = ({
               )}
             </div>
           ) : (
-            <div
-              className="w-28 h-36 flex items-center justify-center drop-shadow-md select-none pointer-events-none"
-              dangerouslySetInnerHTML={{
-                __html: getCostumeSvg(currentCostumeId),
-              }}
-            />
+            <div className="relative w-28 h-36 flex items-center justify-center">
+              <div
+                className="flex items-center justify-center drop-shadow-md select-none pointer-events-none"
+                dangerouslySetInnerHTML={{
+                  __html: getCostumeSvg(currentCostumeId),
+                }}
+              />
+              {mood !== 'picking' && carriedTrashId && carriedItemDef?.id.startsWith('yard_') && (
+                <div
+                  className="absolute bottom-6 right-1 w-10 h-10 rounded-xl bg-white/95 p-1 shadow-md border-2 border-orange-400 flex items-center justify-center pointer-events-none animate-bounce"
+                  style={{ transform: facingDirection === 'left' ? 'scaleX(-1)' : 'none' }}
+                >
+                  <YardTrashGraphic
+                    iconType={carriedItemDef.iconType}
+                    visualVariant={carriedItemVariant}
+                    className="w-full h-full"
+                  />
+                </div>
+              )}
+            </div>
           )}
         </div>
 
+      </div>
       </div>
     </div>
   );

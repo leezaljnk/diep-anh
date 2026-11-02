@@ -2,6 +2,7 @@ import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
 import fs from 'fs';
+import sharp from 'sharp';
 import { defineConfig, type Plugin } from 'vite';
 import { VOICE_PROMPTS } from './src/data/voicePrompts';
 
@@ -21,29 +22,44 @@ function readProjectVoices(inline = false) {
 function mascotUploadPlugin(): Plugin {
   return {
     name: 'mascot-upload-plugin',
-    generateBundle() {
+    async generateBundle() {
       const pubImagesDir = path.resolve(__dirname, 'public/images');
-      const readImageUrls = (directory: string) => {
+      const optimizeImage = async (file: string) => {
+        const relativePath = path.relative(pubImagesDir, file);
+        const originalUrl = `./images/${relativePath.split(path.sep).map(encodeURIComponent).join('/')}`;
+        if (!/\.(png|jpe?g|webp)$/i.test(file)) return originalUrl;
+        const input = await fs.promises.readFile(file);
+        const optimized = await sharp(input)
+          .rotate()
+          .resize({ width: 512, height: 512, fit: 'inside', withoutEnlargement: true })
+          .webp({ quality: 82, effort: 4 })
+          .toBuffer();
+        if (optimized.length >= input.length) return originalUrl;
+        const reference = this.emitFile({
+          type: 'asset',
+          name: `${path.basename(file, path.extname(file))}.webp`,
+          source: optimized,
+        });
+        return `./${this.getFileName(reference)}`;
+      };
+      const readImageUrls = async (directory: string) => {
         if (!fs.existsSync(directory)) return {};
 
         const imageUrls: Record<string, string> = {};
         for (const fileName of fs.readdirSync(directory).sort()) {
           if (/\.(png|jpg|jpeg|webp|svg)$/i.test(fileName)) {
             const id = fileName.replace(/\.(png|jpg|jpeg|webp|svg)$/i, '');
-            const relativePath = path.relative(pubImagesDir, path.join(directory, fileName));
-            const encodedPath = relativePath.split(path.sep).map(encodeURIComponent).join('/');
-            imageUrls[id] = `./images/${encodedPath}`;
+            imageUrls[id] = await optimizeImage(path.join(directory, fileName));
           }
         }
         return imageUrls;
       };
 
-      const customCostumes = readImageUrls(path.join(pubImagesDir, 'costumes'));
-      const customTrashImages = readImageUrls(path.join(pubImagesDir, 'trash'));
-      const readImageUrlIfExists = (fileName: string) => {
-        return fs.existsSync(path.join(pubImagesDir, fileName))
-          ? `./images/${encodeURIComponent(fileName)}`
-          : null;
+      const customCostumes = await readImageUrls(path.join(pubImagesDir, 'costumes'));
+      const customTrashImages = await readImageUrls(path.join(pubImagesDir, 'trash'));
+      const readImageUrlIfExists = async (fileName: string) => {
+        const file = path.join(pubImagesDir, fileName);
+        return fs.existsSync(file) ? optimizeImage(file) : null;
       };
       const preloadedAssets = {
         voiceClips: readProjectVoices(),
@@ -52,9 +68,9 @@ function mascotUploadPlugin(): Plugin {
         customMascotUrl:
           customCostumes['tim_rac_01'] ||
           customCostumes['k-v-2'] ||
-          readImageUrlIfExists('kien-sang-main.png'),
-        customOrganicUrl: readImageUrlIfExists('thung_rac_xanh.png'),
-        customRecyclableUrl: readImageUrlIfExists('thung_rac_cam.png'),
+          await readImageUrlIfExists('kien-sang-main.png'),
+        customOrganicUrl: await readImageUrlIfExists('thung_rac_xanh.png'),
+        customRecyclableUrl: await readImageUrlIfExists('thung_rac_cam.png'),
       };
 
       this.emitFile({

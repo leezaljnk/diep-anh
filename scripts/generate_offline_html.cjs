@@ -92,6 +92,19 @@ function generateOfflineHtml() {
       readDataUrlIfExists('kien-sang-main.png'),
     customOrganicUrl: readDataUrlIfExists('thung_rac_xanh.png'),
     customRecyclableUrl: readDataUrlIfExists('thung_rac_cam.png'),
+    sortingGameAssets: Object.fromEntries(
+      ['rac-chinh', 'gay_nhieu'].flatMap(folder => {
+        const directory = path.join(pubImagesDir, 'thu-tai-phan-loai', folder);
+        return fs.existsSync(directory)
+          ? fs.readdirSync(directory)
+            .filter(file => file.endsWith('.svg'))
+            .map(file => [
+              `thu-tai-phan-loai/${folder}/${file}`,
+              `data:image/svg+xml;base64,${fs.readFileSync(path.join(directory, file)).toString('base64')}`,
+            ])
+          : [];
+      })
+    ),
   };
 
   // 3. Inline JavaScript module
@@ -112,6 +125,13 @@ function generateOfflineHtml() {
         'thung_rac_cam.png',
         'Thung_Rac_Xanh_Huu_Co.png',
         'Thung_Rac_Cam_Tai_Che.png',
+        'tai-su-dung/giay_cu_taisudung.png',
+        'tai-su-dung/ong_nhua_taisudung.png',
+        'tai-su-dung/vo_chai_nhua_taisudung.png',
+        'tai-su-dung/vo_chai_taisudung.png',
+        'tai-su-dung/vo_hop_giay_taisudung.png',
+        'tai-su-dung/vo_hop_sua_taisudung.png',
+        'tai-su-dung/vo_lon_taisudung.png',
       ];
 
       for (const imgFile of imageFiles) {

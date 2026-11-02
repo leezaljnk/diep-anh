@@ -1,6 +1,6 @@
 import React from 'react';
 import { GameMode } from '../types';
-import { Star, Mic, FileCode, RotateCcw, Hand, Bot, Camera, Trash2, FolderUp, Shirt, Globe } from 'lucide-react';
+import { Star, Mic, FileCode, RotateCcw, Hand, Bot, Camera, Trash2, FolderUp, Shirt, Globe, Sparkles } from 'lucide-react';
 
 interface TopBarProps {
   readOnly?: boolean;
@@ -8,6 +8,7 @@ interface TopBarProps {
   maxScore: number;
   gameMode: GameMode;
   onSelectGameMode: (mode: GameMode) => void;
+  onOpenSortingGame: () => void;
   onOpenVoiceStudio: () => void;
   onOpenScratchModal: () => void;
   onOpenOfflineHtmlModal?: () => void;
@@ -31,6 +32,7 @@ export const TopBar: React.FC<TopBarProps> = ({
   maxScore,
   gameMode,
   onSelectGameMode,
+  onOpenSortingGame,
   onOpenVoiceStudio,
   onOpenScratchModal,
   onOpenOfflineHtmlModal,
@@ -89,8 +91,8 @@ export const TopBar: React.FC<TopBarProps> = ({
         </div>
       </div>
 
-      {/* 2 Chế độ chơi (Options as requested) */}
-      <div className="flex items-center bg-slate-100 p-1 rounded-2xl border border-slate-200 shadow-inner">
+      {/* Chọn một trong các màn chơi */}
+      <div className="flex flex-wrap items-center justify-center bg-slate-100 p-1 rounded-2xl border border-slate-200 shadow-inner">
         <button
           onClick={() => onSelectGameMode('drag')}
           className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black transition ${
@@ -98,7 +100,7 @@ export const TopBar: React.FC<TopBarProps> = ({
               ? 'bg-white text-orange-600 shadow-md ring-1 ring-orange-200'
               : 'text-slate-600 hover:text-slate-900'
           }`}
-          title="Bé nhấn giữ chuột hoặc ngón tay kéo thả rác vào thùng"
+          title="Bé chạm và kéo rác vào thùng, hoặc nhấn giữ chuột để kéo"
         >
           <Hand className="w-3.5 h-3.5" />
           <span>Bé tự kéo thả</span>
@@ -111,10 +113,19 @@ export const TopBar: React.FC<TopBarProps> = ({
               ? 'bg-white text-orange-600 shadow-md ring-1 ring-orange-200'
               : 'text-slate-600 hover:text-slate-900'
           }`}
-          title="Bé click chọn rác rồi click thùng, Kiến Sáng sẽ chạy lại nhặt"
+          title="Bé chạm hoặc bấm chọn rác rồi chạm hoặc bấm thùng, Kiến Sáng sẽ chạy lại nhặt"
         >
           <Bot className="w-3.5 h-3.5" />
           <span>Nhờ Kiến Sáng</span>
+        </button>
+        <button
+          type="button"
+          onClick={onOpenSortingGame}
+          className="flex min-h-10 items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-black text-emerald-800 transition hover:bg-white hover:text-emerald-900 focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-emerald-400"
+          title="Mở màn chơi mới: Thử tài phân loại rác"
+        >
+          <Sparkles className="h-4 w-4 text-emerald-700" />
+          <span>Thử tài phân loại rác</span>
         </button>
       </div>
 

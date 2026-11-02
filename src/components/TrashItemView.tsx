@@ -1,11 +1,13 @@
 import React from 'react';
 import { ActiveTrashItem, TrashItemDef } from '../types';
+import { YardTrashGraphic } from './YardTrashGraphic';
 
 interface TrashItemViewProps {
   item?: ActiveTrashItem;
   definition: TrashItemDef;
   isSelected?: boolean;
   isDragging?: boolean;
+  isPickingUp?: boolean;
   onPointerDown?: (e: React.PointerEvent) => void;
   onClick?: () => void;
   style?: React.CSSProperties;
@@ -16,12 +18,17 @@ export const TrashItemView: React.FC<TrashItemViewProps> = ({
   definition,
   isSelected = false,
   isDragging = false,
+  isPickingUp = false,
   onPointerDown,
   onClick,
   style,
 }) => {
   // Render realistic vector icon for trash item
   const renderItemGraphic = () => {
+    if (definition.iconType.startsWith('yard_')) {
+      return <YardTrashGraphic iconType={definition.iconType} visualVariant={item?.visualVariant} />;
+    }
+
     switch (definition.iconType) {
       case 'banana':
         return (
@@ -209,6 +216,93 @@ export const TrashItemView: React.FC<TrashItemViewProps> = ({
             />
           </svg>
         );
+      case 'yard_leaf': {
+        const leafColors = ['#22C55E', '#84CC16', '#FACC15'];
+        const fill = leafColors[(item?.visualVariant ?? 0) % leafColors.length];
+        return (
+          <svg className="w-12 h-12 drop-shadow-md" viewBox="0 0 60 60">
+            <path d="M 12 46 Q 14 17 48 12 Q 48 42 12 46 Z" fill={fill} stroke="#15803D" strokeWidth="2.5" />
+            <path d="M 13 46 L 43 17 M 24 36 L 22 26 M 33 28 L 32 20" fill="none" stroke="#166534" strokeWidth="2" strokeLinecap="round" />
+            <circle cx="37" cy="25" r="2" fill="#FEF3C7" />
+          </svg>
+        );
+      }
+      case 'yard_twig':
+        return (
+          <svg className="w-12 h-12 drop-shadow-md" viewBox="0 0 60 60">
+            <path d="M 12 47 Q 26 32 47 12 M 26 34 L 21 20 M 34 27 L 46 29" fill="none" stroke="#92400E" strokeWidth="6" strokeLinecap="round" />
+            <path d="M 26 30 Q 14 25 18 18 Q 27 18 28 28 M 38 24 Q 40 13 48 15 Q 50 23 40 27" fill="#86EFAC" stroke="#16A34A" strokeWidth="2" />
+          </svg>
+        );
+      case 'yard_flower': {
+        const petals = ['#F472B6', '#C084FC', '#FB7185'];
+        const petalColor = petals[(item?.visualVariant ?? 0) % petals.length];
+        return (
+          <svg className="w-12 h-12 drop-shadow-md" viewBox="0 0 60 60">
+            {[0, 1, 2, 3, 4].map((petal) => {
+              const angle = petal * 72;
+              return <ellipse key={petal} cx="30" cy="17" rx="7" ry="11" transform={`rotate(${angle} 30 30)`} fill={petalColor} stroke="#BE185D" strokeWidth="1.5" />;
+            })}
+            <circle cx="30" cy="30" r="7" fill="#FDE047" stroke="#CA8A04" strokeWidth="2" />
+            <circle cx="28" cy="29" r="1" fill="#713F12" />
+            <circle cx="32" cy="29" r="1" fill="#713F12" />
+            <path d="M 27 33 Q 30 36 33 33" fill="none" stroke="#713F12" strokeWidth="1.5" strokeLinecap="round" />
+          </svg>
+        );
+      }
+      case 'yard_orange_peel': {
+        const peelColors = ['#FB923C', '#F97316', '#FBBF24'];
+        const peelColor = peelColors[(item?.visualVariant ?? 0) % peelColors.length];
+        return (
+          <svg className="w-12 h-12 drop-shadow-md" viewBox="0 0 60 60">
+            <path d="M 13 35 Q 20 12 40 20 Q 53 29 43 43 Q 28 54 15 43 Z" fill={peelColor} stroke="#C2410C" strokeWidth="2.5" />
+            <path d="M 26 18 Q 30 10 37 14 Q 34 20 29 21" fill="#4D7C0F" stroke="#3F6212" strokeWidth="1.5" />
+            <circle cx="24" cy="31" r="2" fill="#FED7AA" />
+            <circle cx="37" cy="36" r="2" fill="#FED7AA" />
+            <circle cx="30" cy="44" r="1.5" fill="#FED7AA" />
+          </svg>
+        );
+      }
+      case 'yard_bottle': {
+        const bottleColors = ['#38BDF8', '#34D399', '#A78BFA'];
+        const bottleColor = bottleColors[(item?.visualVariant ?? 0) % bottleColors.length];
+        return (
+          <svg className="w-12 h-12 drop-shadow-md" viewBox="0 0 60 60">
+            <path d="M 25 9 H 35 V 17 L 40 23 V 48 Q 40 53 35 53 H 25 Q 20 53 20 48 V 23 L 25 17 Z" fill="#E0F2FE" stroke="#0284C7" strokeWidth="2.5" />
+            <path d="M 22 31 H 38 V 46 Q 38 50 34 50 H 26 Q 22 50 22 46 Z" fill={bottleColor} opacity="0.9" />
+            <rect x="25" y="7" width="10" height="5" rx="1.5" fill="#FDE68A" stroke="#B45309" strokeWidth="1" />
+            <path d="M 25 25 Q 28 22 31 25" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" />
+          </svg>
+        );
+      }
+      case 'yard_can': {
+        const canColors = ['#FB7185', '#60A5FA', '#A3E635'];
+        const canColor = canColors[(item?.visualVariant ?? 0) % canColors.length];
+        return (
+          <svg className="w-12 h-12 drop-shadow-md" viewBox="0 0 60 60">
+            <ellipse cx="30" cy="15" rx="13" ry="5" fill="#E2E8F0" stroke="#64748B" strokeWidth="2" />
+            <path d="M 17 15 V 44 Q 17 50 30 50 Q 43 50 43 44 V 15" fill={canColor} stroke="#475569" strokeWidth="2.5" />
+            <ellipse cx="30" cy="44" rx="13" ry="5" fill={canColor} stroke="#475569" strokeWidth="2" />
+            <path d="M 25 27 Q 30 23 35 27 Q 33 35 30 35 Q 27 35 25 27 Z" fill="#FEF3C7" />
+            <circle cx="28" cy="29" r="1" fill="#78350F" />
+            <circle cx="32" cy="29" r="1" fill="#78350F" />
+            <path d="M 28 32 Q 30 34 32 32" fill="none" stroke="#78350F" strokeWidth="1.2" strokeLinecap="round" />
+          </svg>
+        );
+      }
+      case 'yard_wrapper': {
+        const wrapperColors = ['#A78BFA', '#F472B6', '#38BDF8'];
+        const wrapperColor = wrapperColors[(item?.visualVariant ?? 0) % wrapperColors.length];
+        return (
+          <svg className="w-12 h-12 drop-shadow-md" viewBox="0 0 60 60">
+            <path d="M 14 24 L 21 18 L 39 18 L 46 24 L 41 30 L 47 36 L 40 43 L 20 43 L 13 36 L 19 30 Z" fill={wrapperColor} stroke="#6D28D9" strokeWidth="2.5" strokeLinejoin="round" />
+            <path d="M 22 23 Q 30 20 38 23 L 36 38 Q 30 41 24 38 Z" fill="#FDE68A" stroke="#B45309" strokeWidth="1.5" />
+            <circle cx="28" cy="29" r="1.5" fill="#713F12" />
+            <circle cx="33" cy="29" r="1.5" fill="#713F12" />
+            <path d="M 28 33 Q 30 35 33 33" fill="none" stroke="#713F12" strokeWidth="1.5" strokeLinecap="round" />
+          </svg>
+        );
+      }
       default:
         return <div className="text-3xl">🗑️</div>;
     }
@@ -217,6 +311,8 @@ export const TrashItemView: React.FC<TrashItemViewProps> = ({
   return (
     <div
       role="button"
+      data-trash-instance-id={item?.instanceId}
+      data-picking-up={isPickingUp || undefined}
       tabIndex={0}
       onPointerDown={onPointerDown}
       onClick={onClick}
@@ -225,7 +321,7 @@ export const TrashItemView: React.FC<TrashItemViewProps> = ({
         transform: `rotate(${item?.rotation ?? 0}deg) ${isSelected ? 'scale(1.22)' : isDragging ? 'scale(1.15)' : 'scale(1)'}`,
         touchAction: 'none',
       }}
-      className={`group absolute cursor-grab active:cursor-grabbing select-none flex flex-col items-center justify-center p-1.5 rounded-2xl transition-[transform,filter] duration-200 ${
+      className={`mobile-game-trash-item ${isPickingUp ? 'trash-pickup' : ''} group absolute cursor-grab active:cursor-grabbing select-none flex flex-col items-center justify-center p-1.5 rounded-2xl transition-[transform,filter] duration-200 ${
         isSelected
           ? 'drop-shadow-[0_0_16px_rgba(250,204,21,0.9)] animate-pulse'
           : isDragging
