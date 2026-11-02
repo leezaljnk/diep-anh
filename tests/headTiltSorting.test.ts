@@ -8,6 +8,7 @@ import {
   getHeadRollRadians,
   getShoulderRelativeOffset,
   headTiltDirectionToCategory,
+  isHeadTiltCameraReady,
   HEAD_TILT_ROUND_COUNT,
   HEAD_TILT_TRASH_IMAGES,
   HeadTiltNeutralCalibration,
@@ -176,4 +177,13 @@ test('reading time observes neutral without consuming a choice or accumulating d
   for (const time of [900, 1000, 1100, 1200]) assert.equal(detector.update(0.3, time), null);
   assert.equal(detector.update(0.3, 1300), 'right');
   assert.equal(detector.status.needsNeutral, true);
+});
+
+test('answers require a ready camera and a live stream, with no camera-off fallback', () => {
+  for (const state of ['off', 'requesting', 'calibrating', 'error'] as const) {
+    assert.equal(isHeadTiltCameraReady(state, true), false, state);
+    assert.equal(isHeadTiltCameraReady(state, false), false, state);
+  }
+  assert.equal(isHeadTiltCameraReady('ready', false), false);
+  assert.equal(isHeadTiltCameraReady('ready', true), true);
 });

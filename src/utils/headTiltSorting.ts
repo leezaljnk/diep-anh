@@ -5,6 +5,12 @@ export const HEAD_TILT_CALIBRATION_SAMPLE_COUNT = 20;
 export const HEAD_TILT_ENTER_RADIANS = Math.PI / 18;
 export const HEAD_TILT_EXIT_RADIANS = Math.PI / 36;
 
+export type HeadTiltCameraState = 'off' | 'requesting' | 'calibrating' | 'ready' | 'error';
+
+export function isHeadTiltCameraReady(cameraState: HeadTiltCameraState, streamActive: boolean): boolean {
+  return cameraState === 'ready' && streamActive;
+}
+
 export const HEAD_TILT_TRASH_IMAGES: Record<string, string> = {
   vo_hop_sua: './images/trash/vo_hop_sua.png',
   vo_hop_giay: './images/trash/vo_hop_giay.png',

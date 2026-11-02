@@ -4,7 +4,7 @@
 
 Thêm một chế độ chơi mới để trẻ chọn thùng rác bằng cách nghiêng hoặc di chuyển đầu sang trái/phải. Đây là một màn chơi ngang hàng với **Lớp học**, **Sân trường**, **Khu vườn** và **Thử tài phân loại**, không phải modal/game phụ phủ lên màn chơi đang hoạt động. Trò chơi hiển thị lần lượt một món rác, hai lựa chọn **Hữu cơ** và **Tái chế**, phản hồi đáp án đúng/sai bằng hiệu ứng hình ảnh và âm thanh vui nhộn, rồi tự chuyển sang hình rác mới để chơi lượt tiếp theo.
 
-Đây là một cách điều khiển bổ sung cho ứng dụng hiện tại, không thay thế thao tác kéo-thả, chế độ “Nhờ Kiến Sáng” hoặc trò chơi tái sử dụng. Trẻ có thể chơi bằng nút bấm/bàn phím khi không muốn hoặc không thể bật camera. Không dùng camera làm điều kiện bắt buộc để vào trò chơi.
+Đây là một cách điều khiển bổ sung cho ứng dụng hiện tại, không thay thế thao tác kéo-thả, chế độ “Nhờ Kiến Sáng” hoặc trò chơi tái sử dụng. Mode này yêu cầu camera hoạt động và hiệu chỉnh xong trước khi nhận đáp án. Trẻ có thể nghiêng đầu hoặc chạm đáp án khi camera sẵn sàng; không có chế độ chơi khi camera tắt và không dùng bàn phím để chọn đáp án. Việc vào màn giới thiệu không tự xin quyền camera.
 
 ### Phạm vi phiên bản đầu
 
@@ -12,7 +12,7 @@ Thêm một chế độ chơi mới để trẻ chọn thùng rác bằng cách 
 - Chơi theo lượt có điểm và kết quả cuối ván; sau mỗi lựa chọn (đúng hoặc sai), phát âm thanh phản hồi phù hợp rồi chuyển sang hình rác mới.
 - Dùng `playSuccessSfx` / `playErrorSfx` trong `src/utils/audio.ts` làm âm thanh nền tảng; có thể bổ sung âm thanh vui nhộn riêng nếu âm thanh hiện có chưa đạt trải nghiệm mong muốn.
 - Camera và nhận diện chạy hoàn toàn trên thiết bị; không lưu, tải lên hoặc phát trực tuyến hình ảnh.
-- Có nút điều khiển thay thế cho mọi thao tác nhận diện.
+- Có hai đáp án hỗ trợ chạm khi camera sẵn sàng; khóa đáp án khi camera tắt, đang kết nối, đang hiệu chỉnh hoặc gặp lỗi.
 - Không thêm tài khoản, máy chủ, bảng xếp hạng hoặc thu thập dữ liệu camera.
 
 ## 2. Bối cảnh dự án và quyết định tích hợp
@@ -58,7 +58,7 @@ Màn chơi mới cần được biểu diễn như một giá trị scene/mode r
 - Chế độ này chỉ được phân phối qua bản game deploy trên GitHub Pages; không yêu cầu hỗ trợ hoặc tích hợp vào luồng xuất HTML offline hiện có.
 - `getUserMedia` yêu cầu quyền rõ ràng và secure context. GitHub Pages chạy HTTPS phù hợp cho camera trên trình duyệt hỗ trợ, nhưng vẫn cần xử lý quyền bị từ chối, trình duyệt không hỗ trợ và camera bận.
 - Model và tài nguyên nhận diện phải được cung cấp qua deploy HTTPS của game. Không tải ảnh/video người chơi lên GitHub hay bất kỳ dịch vụ nào; kiểm tra model được đóng gói/phục vụ ổn định trong production và không làm tăng tải ban đầu của các mode khác.
-- Máy yếu, ánh sáng kém, khuôn mặt ngoài khung hoặc camera bận phải đưa game về trạng thái lỗi/hướng dẫn dễ hiểu, không làm mất cách chơi bằng nút.
+- Máy yếu, ánh sáng kém, khuôn mặt ngoài khung hoặc camera bận phải có trạng thái dễ hiểu. Camera lỗi hoặc bị tắt phải khóa đáp án, cho phép bật lại hoặc về màn chính, không tự chuyển sang chơi không camera.
 - Việc thêm model có thể ảnh hưởng thời gian tải game. Giữ game lazy-loaded; đo kích thước và thời gian tải trước khi quyết định giữ model trong chunk riêng hay tải theo yêu cầu.
 
 ## 4. Giao diện và trải nghiệm
@@ -66,19 +66,20 @@ Màn chơi mới cần được biểu diễn như một giá trị scene/mode r
 ### Màn hình vào mode mới
 
 - Tiêu đề: **Nghiêng đầu phân loại rác**; mô tả ngắn: camera chỉ xử lý hình ảnh trên thiết bị.
-- Hai lựa chọn bắt đầu rõ ràng: **Bật camera** và **Chơi bằng nút**.
+- Một lựa chọn bắt đầu: **Bật camera**. Khi quyền bị từ chối hoặc camera không khả dụng, hiển thị lỗi và cho phép thử lại hoặc quay về màn chính.
 - Trước khi xin quyền, nêu mục đích sử dụng camera và yêu cầu có người lớn hỗ trợ nếu cần.
 - Có điều hướng quay về màn hình chính theo pattern chuyển mode hiện tại; không trình bày mode mới như một dialog/modal.
 
 ### Màn hình chơi
 
+- Mobile dùng một viewport theo chiều cao động: câu hỏi và ảnh nhỏ ở trên, camera co giãn ở giữa, hai đáp án chạm ở dưới. Không cần cuộn để thấy camera và đáp án; các nút camera thu gọn thành biểu tượng. Màn hình ngang chuyển sang hai cột; desktop giữ khoảng 40% cho câu hỏi/đáp án và 60% cho camera.
 - Phản hồi hiện tại của mode này không phát giọng nói: chỉ dùng `playSuccessSfx` khi đúng và `playErrorSfx` khi sai. Giữ đáp án cùng lời giải thích trên màn hình 4 giây rồi tự chuyển câu, kể cả câu cuối trước tổng kết.
 - Trả lời đúng có hiệu ứng tung hoa; trả lời sai có mặt buồn và giọt nước mắt nhẹ kèm lời động viên. Tắt các chuyển động này khi người chơi bật `prefers-reduced-motion`; hiệu ứng không chặn điều khiển và được dọn khi chuyển câu hoặc thoát game.
 - Khu vực chính hiển thị câu hỏi bằng chữ, rõ và đủ lớn để bé đọc trước khi chọn, ví dụ **“Vỏ chuối thuộc nhóm nào?”**; kèm tên/ảnh vật phẩm, số lượt và điểm. Câu hỏi phải nêu rõ yêu cầu phân loại, không chỉ đưa ảnh rác mà không có hướng dẫn.
 - Hai vùng chọn có nhãn, màu sắc và biểu tượng: **Hữu cơ** và **Tái chế**. Không chỉ dựa vào màu để truyền tải đáp án.
-- Nếu camera hoạt động, hiển thị preview nhỏ có thể ẩn và hướng dẫn trực quan trái/phải; không cần vẽ skeleton trong phiên bản đầu.
+- Hiển thị camera lớn nhất trong diện tích còn lại, giữ trọn hình gốc bằng `object-contain`, không cố định tỷ lệ khung hiển thị. Có thể ẩn preview; không cần vẽ skeleton trong phiên bản đầu.
 - Hiển thị trạng thái dễ hiểu: “Đang tìm khuôn mặt”, “Hãy nhìn thẳng để bắt đầu”, “Đọc câu hỏi rồi nghiêng sang trái/phải”, “Đã chọn”. Camera chỉ nhận lựa chọn khi lượt chơi đã sẵn sàng; cần có khoảng dừng ngắn để bé đọc câu hỏi trước khi bắt đầu nhận cử động.
-- Nút trái/phải và phím mũi tên là phương án nhập thay thế; hỗ trợ Space/Enter để xác nhận khi phù hợp.
+- Hai đáp án có nhãn, biểu tượng và vùng chạm rõ ràng; chỉ nhận chạm khi camera sẵn sàng. Bỏ hướng dẫn phím mũi tên, Enter/Space và đoạn hướng dẫn nghiêng đầu dài trên mobile; trạng thái camera ngắn gọn cho biết đang chuẩn bị, về giữa hoặc đang chọn.
 - Đúng/sai có chữ, hiệu ứng hình ảnh và âm thanh vui nhộn riêng biệt; giảm chuyển động khi `prefers-reduced-motion` bật.
 - Sau phản hồi cho từng lựa chọn, tự động hiện vật phẩm/hình ảnh mới để chọn tiếp bất kể đáp án vừa rồi đúng hay sai; thể hiện rõ lượt mới và không yêu cầu tải lại màn chơi.
 - Phản hồi sai theo hướng khích lệ, không phạt điểm: nói/hiện đáp án đúng và một lời giải thích ngắn, tích cực trước khi sang hình tiếp theo. Ví dụ: “Chưa đúng rồi, vỏ chuối là rác hữu cơ vì có thể phân hủy nhé!”
@@ -91,7 +92,7 @@ Màn chơi mới cần được biểu diễn như một giá trị scene/mode r
 
 `intro` → `requesting-camera` → `calibrating` → `playing` → `feedback` → `complete`.
 
-Lỗi quyền/model/thiết bị không hỗ trợ phải có trạng thái riêng kèm thao tác thử lại hoặc chuyển ngay sang chơi bằng nút. Người chơi không bị mắc kẹt ở màn xin quyền.
+Lỗi quyền/model/thiết bị không hỗ trợ phải có trạng thái riêng kèm thao tác thử lại hoặc về màn chính. Không có phương án chơi không camera. Tạm dừng, tiếp tục và chơi lại đều phải bật camera thành công trước khi nhận đáp án.
 
 ## 5. Luồng xử lý Game & AI (Game Loop)
 
@@ -100,7 +101,7 @@ Lỗi quyền/model/thiết bị không hỗ trợ phải có trạng thái riê
 1. Người chơi chọn bật camera; chỉ lúc đó mới gọi `navigator.mediaDevices.getUserMedia`.
 2. Kiểm tra API, secure context và khả năng truy cập camera; hiển thị lỗi/hướng dẫn cụ thể khi không đáp ứng.
 3. Khởi tạo pose landmarker và video. Không xử lý khung hình khi game đã thoát, tạm dừng hoặc tab không hiển thị.
-4. Chờ tín hiệu hợp lệ ổn định rồi lấy tư thế trung tính ban đầu. Nếu trẻ không bật camera, vẫn có thể bắt đầu ở chế độ nút.
+4. Chờ tín hiệu hợp lệ ổn định rồi lấy tư thế trung tính ban đầu. Chỉ mở khóa đáp án khi camera và hiệu chỉnh đã sẵn sàng; không bắt đầu ván mới khi chưa khởi động được camera.
 
 ### 5.2 Diễn giải cử động
 
@@ -117,7 +118,7 @@ Mục tiêu hiện tại là nhận **nghiêng đầu sang trái/phải tại ch
 ### 5.3 Vòng chơi
 
 1. Tạo bộ câu hỏi từ dữ liệu rác hiện có; trộn thứ tự, tránh lặp liên tiếp và cân bằng số câu hữu cơ/tái chế khi pool cho phép.
-2. Hiển thị câu hỏi dạng chữ (ví dụ “Vỏ chuối thuộc nhóm nào?”), ảnh vật phẩm và hai lựa chọn. Cho bé khoảng dừng để đọc/nhìn câu hỏi trước khi kích hoạt nhận diện cử động; camera hướng dẫn hoặc nút bấm đều gọi cùng một hàm `submitChoice(category)`.
+2. Hiển thị câu hỏi dạng chữ (ví dụ “Vỏ chuối thuộc nhóm nào?”), ảnh vật phẩm và hai lựa chọn. Cho bé khoảng dừng để đọc/nhìn câu hỏi trước khi kích hoạt nhận diện cử động; camera hoặc chạm đều gọi cùng một hàm `submitChoice(category)`, có kiểm tra camera sẵn sàng và stream còn hoạt động.
 3. Khi có lựa chọn, khóa nhận diện, so sánh với `item.category`, cập nhật điểm/lượt đúng một lần và phát feedback hình ảnh cùng âm thanh vui nhộn phù hợp (đúng/sai). Câu đúng cho hiệu ứng đưa rác vào thùng phù hợp; câu sai nhẹ nhàng hé lộ đáp án và lý do ngắn, không trừ điểm.
 4. Sau thời gian feedback ngắn, tự động chuyển sang hình rác mới để chọn tiếp bất kể đáp án đúng hay sai; hiển thị tiến độ và kết thúc ván ngắn với tổng kết tích cực, lời khen nỗ lực và nút chơi lại.
 5. Khi tạm dừng, thoát, unmount hoặc gặp lỗi nghiêm trọng: hủy animation/frame callback, dừng mọi `MediaStreamTrack`, đóng model/task và giải phóng tài nguyên video.
@@ -154,7 +155,7 @@ Mục tiêu hiện tại là nhận **nghiêng đầu sang trái/phải tại ch
 - Prototype MediaPipe Tasks Vision trong trang thử nghiệm nội bộ: đo bundle, FPS/độ trễ, quyền camera và hướng trái/phải.
 - Xác minh điều kiện HTTPS trên GitHub Pages, trình duyệt và cách phục vụ model/tài nguyên trong production.
 
-**Điều kiện qua bước:** nhận diện ổn định trên ít nhất một thiết bị mục tiêu, xác định được phương án nút thay thế và cách xử lý model.
+**Điều kiện qua bước:** nhận diện ổn định trên ít nhất một thiết bị mục tiêu, thao tác chạm hoạt động khi camera sẵn sàng và xác định được cách xử lý model.
 
 ### Bước 2 — Tách luật chơi và dữ liệu
 
@@ -163,10 +164,10 @@ Mục tiêu hiện tại là nhận **nghiêng đầu sang trái/phải tại ch
 - Xác định fallback cho vật phẩm thiếu ảnh hoặc nội dung không phù hợp.
 - Viết unit test cho đúng/sai, chọn lượt, không lặp liên tiếp và không tăng điểm hai lần.
 
-### Bước 3 — Xây giao diện mode có thể chơi không cần camera
+### Bước 3 — Xây giao diện camera và thao tác chạm
 
 - Tạo UI mode mới, các trạng thái intro/playing/feedback/complete/error.
-- Thêm lựa chọn hữu cơ/tái chế bằng nút lớn; nối bàn phím theo quy tắc hiện tại của dự án.
+- Thêm hai đáp án hữu cơ/tái chế có thể chạm khi camera sẵn sàng. Không thêm luồng chơi không camera hoặc điều khiển chọn đáp án bằng bàn phím. Mobile phải thấy câu hỏi, camera và đáp án trong cùng viewport.
 - Tái sử dụng mascot, âm thanh/giọng nói và phong cách giao diện; giữ dữ liệu điểm của game mới độc lập với điểm game chính trừ khi có quyết định sản phẩm khác.
 - Phát âm thanh vui nhộn khác nhau cho đúng và sai bằng tiện ích audio hiện có; nếu cần thêm SFX, tích hợp theo pattern asset/audio của dự án, tránh âm lượng đột ngột và không chặn chuyển lượt.
 - Sau feedback ngắn, luôn thay ảnh/vật phẩm hiện tại bằng ảnh lượt kế tiếp cho cả đáp án đúng lẫn sai; khóa lựa chọn trong lúc feedback/chuyển lượt để không tính lặp.
@@ -178,7 +179,7 @@ Mục tiêu hiện tại là nhận **nghiêng đầu sang trái/phải tại ch
 - Tạo hook/module có API hẹp: trạng thái camera, lỗi, lựa chọn đã ổn định, `start`, `stop`, `calibrate`.
 - Triển khai lọc landmark, hiệu chỉnh neutral, ngưỡng chuẩn hóa, smoothing, dwell-time, hysteresis và khóa một lựa chọn mỗi lượt.
 - Xác minh mapping trái/phải với preview phản chiếu và camera thực.
-- Đảm bảo lỗi camera/model không làm hỏng game nút bấm.
+- Camera/model lỗi phải khóa đáp án và cho phép thử lại hoặc thoát; bật lại trong ván giữ nguyên câu và điểm, còn chơi lại phải khởi động camera thành công rồi mới tạo ván mới.
 
 ### Bước 5 — Tích hợp như một mode trong ứng dụng
 
@@ -206,7 +207,8 @@ Mục tiêu hiện tại là nhận **nghiêng đầu sang trái/phải tại ch
 ## 7. Tiêu chí nghiệm thu
 
 - Có thể chọn mode mới từ luồng chọn/chuyển màn cấp cao và quay lại màn hình chính; các mode/luồng hiện tại không đổi hành vi.
-- Có thể hoàn thành toàn bộ ván bằng nút/bàn phím khi không cấp quyền camera.
+- Không thể bắt đầu hoặc gửi đáp án khi không cấp quyền camera, camera tắt, đang khởi tạo hoặc đang hiệu chỉnh. Có thể chạm hoặc nghiêng đầu để trả lời sau khi camera sẵn sàng; không chọn bằng phím mũi tên/Enter/Space.
+- Trên các viewport mobile mục tiêu, câu hỏi, camera và hai đáp án cùng nhìn thấy mà không cuộn; không có chữ hoặc nút bị cắt, cả chiều dọc và chiều ngang.
 - Khi có camera, một cử động ổn định chỉ tạo tối đa một lựa chọn; không chọn liên tục khi giữ đầu lệch.
 - Trái/phải đúng với hướng dẫn nhìn thấy trên màn hình; tín hiệu thiếu tin cậy không tính là đáp án.
 - Mỗi lượt có câu hỏi bằng chữ dễ đọc, nêu rõ vật phẩm và yêu cầu chọn nhóm; bé có thời gian đọc trước khi đầu vào camera được kích hoạt.
@@ -215,7 +217,7 @@ Mục tiêu hiện tại là nhận **nghiêng đầu sang trái/phải tại ch
 - Khi đúng, hiệu ứng trực quan củng cố lựa chọn; khi sai, hiện đáp án và giải thích ngắn một cách khích lệ, không trừ điểm hoặc làm trẻ phải bắt đầu lại.
 - Mỗi câu trả lời chỉ phát một lần âm thanh, chỉ cập nhật điểm/lượt một lần và chuyển đúng một lần sang vật phẩm tiếp theo.
 - Tiến độ ván hiển thị rõ; kết thúc có lời chúc mừng và lựa chọn chơi lại, không có timer gây áp lực hay bảng xếp hạng.
-- Quyền bị từ chối/model lỗi/không có camera có hướng dẫn và đường chơi thay thế.
+- Quyền bị từ chối/model lỗi/không có camera có thông báo, nút thử lại và điều hướng về màn chính; không có chế độ chơi thay thế không camera.
 - Thoát game dừng video và giải phóng model/stream; không có ảnh hoặc landmark được lưu hay gửi đi.
 - `npm run lint`, các test mục tiêu và `npm run build` chạy thành công.
 - Game hoạt động trên bản deploy GitHub Pages HTTPS; không yêu cầu hoặc cam kết hỗ trợ mode này trong HTML offline xuất ra.
@@ -239,14 +241,14 @@ Có thể dùng prompt sau để giao việc triển khai sau khi chốt các đ
 >
 > 1. Thêm một mode cấp cao có thể vào/thoát theo pattern chuyển màn hiện có. Không dùng `isSortingGameOpen` cho mode mới vì biến đó điều khiển game tái sử dụng.
 > 2. Mỗi lượt hiển thị câu hỏi bằng chữ đủ lớn, dễ đọc (ví dụ **“Vỏ chuối thuộc nhóm nào?”**), ảnh/tên vật phẩm và hai lựa chọn **Hữu cơ** / **Tái chế**. Bé cần có thời gian đọc câu hỏi trước khi camera bắt đầu nhận cử động. Dùng đúng kiểu `TrashCategory` (`organic | recyclable`), không tạo category “inorganic”.
-> 3. Có màn hình vào game với hai lựa chọn: **Bật camera** và **Chơi bằng nút**. Không xin quyền camera trước khi người chơi chủ động chọn bật. Nút lớn và bàn phím phải đủ để chơi trọn ván không cần camera.
+> 3. Có màn hình vào game với lựa chọn **Bật camera**. Không xin quyền trước thao tác chủ động. Mode này yêu cầu camera: lỗi hoặc chưa sẵn sàng phải khóa đáp án, cho phép thử lại hoặc thoát. Không có **Chơi bằng nút** khi camera tắt hoặc điều khiển chọn đáp án bằng bàn phím. Khi camera sẵn sàng, hai đáp án hỗ trợ chạm.
 > 4. Nếu người chơi bật camera, nhận biết nghiêng đầu sang trái/phải tại chỗ bằng roll 2D trên thiết bị, không tải hình ảnh hoặc landmark lên server và không lưu video. Thể hiện rõ camera đang bật và tín hiệu đang nhận, cho phép tắt hoặc hiệu chỉnh camera bất kỳ lúc nào.
-> 5. Dùng chung một hàm xử lý câu trả lời cho camera, nút và bàn phím. Mỗi lượt chỉ được tính một lần; đáp án đúng/sai có hiệu ứng trực quan và âm thanh vui nhộn riêng biệt. Ưu tiên `playSuccessSfx` / `playErrorSfx` trong `src/utils/audio.ts`; nếu cần SFX mới thì tích hợp theo quy ước asset/audio hiện có. Có nút tắt âm thanh; hiệu ứng âm thanh không được chồng lặp hoặc làm chậm lượt.
+> 5. Dùng chung một hàm xử lý câu trả lời cho camera và thao tác chạm, kiểm tra camera sẵn sàng và stream còn hoạt động. Mỗi lượt chỉ được tính một lần; đáp án đúng/sai có hiệu ứng trực quan và âm thanh vui nhộn riêng biệt. Ưu tiên `playSuccessSfx` / `playErrorSfx` trong `src/utils/audio.ts`; không phát giọng nói. Có nút tắt âm thanh; hiệu ứng âm thanh không chồng lặp.
 > 6. Chọn số lượt và luật điểm phù hợp với UI hiện có; giữ điểm mode mới độc lập với điểm game chính. Tránh lặp liên tiếp nếu ngân hàng câu hỏi cho phép.
 > 7. Ảnh vật phẩm phải lấy từ `public/images/trash/` và `public/images/thu-tai-phan-loai/`. Tạo mapping rõ ràng theo ID, xác minh ảnh đúng nội dung; không mặc định mọi vật phẩm trong data đều có ảnh cùng tên ở cả hai thư mục. Dùng fallback an toàn nếu thiếu ảnh.
 > 8. Sau khi người chơi chọn, khóa đầu vào, phát feedback đúng/sai trong thời gian ngắn, rồi tự động chuyển sang hình/vật phẩm mới để chọn tiếp bất kể câu vừa rồi đúng hay sai. Mỗi lượt chỉ phát một SFX, cập nhật điểm một lần và chuyển hình đúng một lần; kết thúc khi hết số lượt đã định.
 > 9. Làm trải nghiệm vui và không gây áp lực: đúng thì vật phẩm bay vào thùng đúng và Kiến Sáng vui; sai thì nhẹ nhàng chỉ đáp án đúng kèm giải thích một câu, không trừ điểm/khởi động lại. Hiển thị tiến độ, cân bằng hai nhóm rác, tránh lặp vật phẩm liền nhau, kết thúc bằng lời khen nỗ lực và nút chơi lại; không dùng timer đếm ngược hoặc bảng xếp hạng.
-> 10. Có thể chuẩn bị hướng dẫn/thử cử động ngắn trước ván (nhìn thẳng, nghiêng trái/phải), nhưng cho phép bỏ qua và luôn giữ phương án chơi bằng nút/bàn phím. Ưu tiên các ý tưởng này hơn phần thưởng phức tạp hoặc lưu tiến độ.
+> 10. Hiệu chỉnh camera trước khi mở khóa đáp án; có thể hiệu chỉnh lại mà không mất tiến độ. Trên mobile, đặt câu hỏi gọn phía trên, camera co giãn ở giữa, đáp án chạm ở dưới để không phải cuộn. Không hiện hướng dẫn bàn phím hoặc thêm chế độ chơi không camera.
 >
 > ### Yêu cầu kỹ thuật cho camera/AI
 >
