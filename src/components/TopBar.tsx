@@ -9,6 +9,7 @@ interface TopBarProps {
   gameMode: GameMode;
   onSelectGameMode: (mode: GameMode) => void;
   onOpenSortingGame: () => void;
+  onOpenHeadTiltGame?: () => void;
   onOpenVoiceStudio: () => void;
   onOpenScratchModal: () => void;
   onOpenOfflineHtmlModal?: () => void;
@@ -33,6 +34,7 @@ export const TopBar: React.FC<TopBarProps> = ({
   gameMode,
   onSelectGameMode,
   onOpenSortingGame,
+  onOpenHeadTiltGame,
   onOpenVoiceStudio,
   onOpenScratchModal,
   onOpenOfflineHtmlModal,
@@ -127,6 +129,17 @@ export const TopBar: React.FC<TopBarProps> = ({
           <Sparkles className="h-4 w-4 text-emerald-700" />
           <span>Thử tài phân loại rác</span>
         </button>
+        {onOpenHeadTiltGame && (
+          <button
+            type="button"
+            onClick={onOpenHeadTiltGame}
+            className="flex min-h-10 items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-black text-sky-800 transition hover:bg-white hover:text-sky-900 focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-sky-400"
+            title="Mở màn chơi độc lập: Nghiêng đầu phân loại rác"
+          >
+            <Camera className="h-4 w-4 text-sky-700" />
+            <span>Nghiêng đầu</span>
+          </button>
+        )}
       </div>
 
       {/* Bộ đếm sao: 10 sao chiến thắng */}

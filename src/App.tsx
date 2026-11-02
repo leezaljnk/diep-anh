@@ -65,6 +65,9 @@ const SunlitGardenGame = React.lazy(() =>
 const ReuseSortingGame = React.lazy(() =>
   import('./components/ReuseSortingGame').then(({ ReuseSortingGame: game }) => ({ default: game }))
 );
+const HeadTiltSortingGame = React.lazy(() =>
+  import('./components/HeadTiltSortingGame').then(({ HeadTiltSortingGame: game }) => ({ default: game }))
+);
 const modalLoadingFallback = (
   <div role="status" className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/50 p-4 text-sm font-bold text-white">
     Đang mở cửa sổ…
@@ -94,6 +97,7 @@ export default function App() {
   const [scene, setScene] = useState<GameScene>('classroom');
   const [isGardenOpen, setIsGardenOpen] = useState(false);
   const [isSortingGameOpen, setIsSortingGameOpen] = useState(false);
+  const [isHeadTiltGameOpen, setIsHeadTiltGameOpen] = useState(false);
   const [reuseSuggestion, setReuseSuggestion] = useState<{ instanceId: string; hint: ReuseHint } | null>(null);
   const sceneRef = useRef<GameScene>('classroom');
   const sceneItemsRef = useRef<Record<GameScene, ActiveTrashItem[] | null>>({
@@ -1556,13 +1560,14 @@ export default function App() {
         </div>
       )}
       {/* Thanh công cụ trên cùng */}
-      {!isGardenOpen && !isSortingGameOpen && <TopBar
+      {!isGardenOpen && !isSortingGameOpen && !isHeadTiltGameOpen && <TopBar
         readOnly={sharedAssetsEnabled}
         score={score}
         maxScore={MAX_SCORE}
         gameMode={gameMode}
         onSelectGameMode={handleSelectGameMode}
         onOpenSortingGame={() => setIsSortingGameOpen(true)}
+        onOpenHeadTiltGame={window.location.protocol === 'file:' ? undefined : () => setIsHeadTiltGameOpen(true)}
         onOpenVoiceStudio={() => setIsVoiceModalOpen(true)}
         onOpenScratchModal={() => setIsScratchModalOpen(true)}
         onOpenOfflineHtmlModal={() => setIsOfflineHtmlModalOpen(true)}
@@ -1591,7 +1596,16 @@ export default function App() {
 
       {/* KHUNG CẢNH LỚP HỌC CHÍNH */}
       <div ref={playAreaRef} className="relative flex-1 w-full h-full overflow-hidden">
-        {isGardenOpen ? (
+        {isHeadTiltGameOpen ? (
+          <React.Suspense fallback={modalLoadingFallback}>
+            <HeadTiltSortingGame
+              onExit={() => setIsHeadTiltGameOpen(false)}
+              triggerSpeech={triggerSpeech}
+              customMascotUrl={customMascotUrl}
+              customTrashImages={customTrashImages}
+            />
+          </React.Suspense>
+        ) : isGardenOpen ? (
           <React.Suspense fallback={<div role="status" className="absolute inset-0 z-40 flex items-center justify-center bg-sky-200 font-bold text-emerald-900">Đang mở khu vườn…</div>}>
             <SunlitGardenGame
               onReturnToClassroom={() => setIsGardenOpen(false)}

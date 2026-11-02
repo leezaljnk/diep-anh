@@ -31,7 +31,7 @@ test('98 unique recording IDs cover all scenes and have exact scripts documented
 });
 
 test('every speech/feedback call passes an explicit ID, and literal text matches that ID', () => {
-  for (const path of ['App.tsx', 'components/SunlitGardenGame.tsx', 'components/ReuseSortingGame.tsx']) {
+  for (const path of ['App.tsx', 'components/SunlitGardenGame.tsx', 'components/ReuseSortingGame.tsx', 'components/HeadTiltSortingGame.tsx']) {
     const source = readFileSync(new URL(`../src/${path}`, import.meta.url), 'utf8');
     const calls = [...source.matchAll(/\b(?:triggerSpeech|showFeedback)\(/g)];
     assert(calls.length > 0, path);
