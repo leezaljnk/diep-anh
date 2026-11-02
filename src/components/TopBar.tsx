@@ -134,10 +134,10 @@ export const TopBar: React.FC<TopBarProps> = ({
             type="button"
             onClick={onOpenHeadTiltGame}
             className="flex min-h-10 items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-black text-sky-800 transition hover:bg-white hover:text-sky-900 focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-sky-400"
-            title="Mở màn chơi độc lập: Nghiêng đầu phân loại rác"
+            title="Mở màn chơi: Nghiêng đầu phân loại rác"
           >
             <Camera className="h-4 w-4 text-sky-700" />
-            <span>Nghiêng đầu</span>
+            <span>Gật Gù Bỏ Rác</span>
           </button>
         )}
       </div>
