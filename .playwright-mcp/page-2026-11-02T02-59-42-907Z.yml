@@ -1,0 +1,26 @@
+- main [ref=e180]:
+  - generic [ref=e181]:
+    - button "Về màn chơi chính" [ref=e182]
+    - heading "Nghiêng đầu phân loại rác" [level=1] [ref=e186]
+    - generic [ref=e187]:
+      - button "Tắt âm thanh" [ref=e188]
+      - button "Tạm dừng" [ref=e215]
+  - generic [ref=e218]:
+    - generic [ref=e219]:
+      - generic [ref=e220]:
+        - paragraph [ref=e221]: Câu 1/8
+        - paragraph [ref=e222]: "Điểm đúng: 0"
+      - generic "Tiến độ 1 trên 8" [ref=e224]
+    - generic [ref=e227]:
+      - generic [ref=e228]:
+        - paragraph [ref=e229]: Bé hãy phân loại
+        - heading "“Vỏ lon nước ngọt” thuộc nhóm nào?" [level=2] [ref=e230]
+      - img "Vỏ lon nước ngọt" [ref=e239]
+    - generic [ref=e240]:
+      - button "Hữu cơ Lá, thức ăn, vỏ quả" [ref=e241]:
+        - generic [ref=e245]: Hữu cơ
+        - generic [ref=e246]: Lá, thức ăn, vỏ quả
+      - button "Tái chế Giấy, nhựa, kim loại" [ref=e247]:
+        - generic [ref=e255]: Tái chế
+        - generic [ref=e256]: Giấy, nhựa, kim loại
+    - paragraph [ref=e257]: Dùng nút hoặc phím mũi tên trái/phải, rồi nhấn Enter hoặc Space.

@@ -5,10 +5,12 @@ import { TRASH_ITEMS } from '../src/data/trashItems';
 import {
   createHeadTiltRounds,
   evaluateHeadTiltChoice,
+  getHeadRollRadians,
   getShoulderRelativeOffset,
   headTiltDirectionToCategory,
   HEAD_TILT_ROUND_COUNT,
   HEAD_TILT_TRASH_IMAGES,
+  HeadTiltNeutralCalibration,
   HeadTiltSignalDetector,
   median,
 } from '../src/utils/headTiltSorting';
@@ -45,11 +47,61 @@ test('pose offset is normalized by shoulder width and rejects unreliable landmar
   assert.equal(getShoulderRelativeOffset(landmarks), null);
 });
 
+test('head tilt uses the eye line even when the nose and shoulders do not move', () => {
+  for (const angle of [-Math.PI / 12, 0, Math.PI / 12]) {
+    const landmarks = [] as ({ x: number; y: number; visibility: number } | undefined)[];
+    landmarks[0] = { x: 0.5, y: 0.5, visibility: 1 };
+    landmarks[2] = { x: 0.4, y: 0.4, visibility: 1 };
+    landmarks[5] = { x: 0.6, y: 0.4 + Math.tan(angle) * 0.2 * 640 / 480, visibility: 1 };
+    assert(Math.abs(getHeadRollRadians(landmarks, 640, 480)! - angle) < 1e-9);
+  }
+});
+
+test('head tilt is independent of translation, eye ordering and camera aspect ratio', () => {
+  for (const [width, height] of [[640, 480], [1920, 1080], [480, 640]]) {
+    const angle = Math.PI / 12;
+    const landmarks = [] as ({ x: number; y: number; visibility: number } | undefined)[];
+    landmarks[2] = { x: 0.7, y: 0.3 + Math.tan(angle) * 0.2 * width / height, visibility: 1 };
+    landmarks[5] = { x: 0.5, y: 0.3, visibility: 1 };
+    assert(Math.abs(getHeadRollRadians(landmarks, width, height)! - angle) < 1e-9);
+  }
+});
+
+test('head tilt rejects missing, unreliable or out-of-frame eyes and invalid video dimensions', () => {
+  const landmarks = [] as ({ x: number; y: number; visibility: number } | undefined)[];
+  assert.equal(getHeadRollRadians(landmarks, 640, 480), null);
+  landmarks[2] = { x: 0.4, y: 0.4, visibility: 1 };
+  landmarks[5] = { x: 0.6, y: 0.4, visibility: 0.1 };
+  assert.equal(getHeadRollRadians(landmarks, 640, 480), null);
+  landmarks[5] = { x: 0.41, y: 0.4, visibility: 1 };
+  assert.equal(getHeadRollRadians(landmarks, 640, 480), null);
+  landmarks[5] = { x: 0.6, y: -0.1, visibility: 1 };
+  assert.equal(getHeadRollRadians(landmarks, 640, 480), null);
+  landmarks[5] = { x: 0.6, y: 0.4, visibility: 1 };
+  assert.equal(getHeadRollRadians(landmarks, 0, 480), null);
+  assert.equal(getHeadRollRadians(landmarks, 640, Number.NaN), null);
+});
+
 test('mirrored camera directions match the visible left and right choices', () => {
   assert.equal(headTiltDirectionToCategory('right'), 'organic');
   assert.equal(headTiltDirectionToCategory('left'), 'recyclable');
   assert.equal(headTiltDirectionToCategory('left', false), 'organic');
   assert.equal(headTiltDirectionToCategory('right', false), 'recyclable');
+});
+
+test('opposite camera movements cannot both be correct for the same question', () => {
+  for (const item of TRASH_ITEMS) {
+    const answers = [-0.3, 0.3].map(offset => {
+      const detector = new HeadTiltSignalDetector(0);
+      let direction: ReturnType<HeadTiltSignalDetector['update']> = null;
+      for (const time of [0, 100, 200, 300, 400, 500]) {
+        direction = detector.update(offset, time);
+      }
+      assert.notEqual(direction, null);
+      return evaluateHeadTiltChoice(item, headTiltDirectionToCategory(direction!));
+    });
+    assert.equal(answers.filter(Boolean).length, 1, item.id);
+  }
 });
 
 test('neutral calibration and dwell detection emit one direction until the player returns to neutral', () => {
@@ -66,4 +118,62 @@ test('neutral calibration and dwell detection emit one direction until the playe
   }
   assert.equal(detector.update(-0.3, 2100), 'left');
   assert.equal(detector.update(null, 2200), null);
+});
+
+test('a movement must stay beyond the selection threshold for the entire dwell time', () => {
+  const detector = new HeadTiltSignalDetector(0);
+  for (const [offset, time] of [[0.3, 0], [0.12, 100], [0.12, 200], [0.12, 300], [0.12, 400], [0.3, 500], [0.3, 600], [0.3, 700]]) {
+    assert.equal(detector.update(offset, time), null, `must not select at ${time}ms`);
+  }
+  assert.equal(detector.update(0.3, 1000), null);
+  assert.equal(detector.update(0.3, 1200), 'right');
+});
+
+test('a long gap between camera frames cannot complete a pending movement', () => {
+  const detector = new HeadTiltSignalDetector(0);
+  assert.equal(detector.update(0.3, 0), null);
+  assert.equal(detector.update(0.3, 2000), null);
+  assert.equal(detector.update(0.3, 2100), null);
+  assert.equal(detector.update(0.3, 2200), null);
+  assert.equal(detector.update(0.3, 2300), null);
+  assert.equal(detector.update(0.3, 2500), 'right');
+});
+
+test('neutral calibration waits for twenty consecutive stable frames', () => {
+  const calibration = new HeadTiltNeutralCalibration();
+  for (let index = 0; index < 20; index++) {
+    assert.equal(calibration.update(index % 2 === 0 ? -0.3 : 0.3, index * 100), null);
+  }
+  for (let index = 0; index < 19; index++) {
+    assert.equal(calibration.update(0.01, 2000 + index * 100), null);
+  }
+  assert.equal(calibration.update(0.01, 3900), 0.01);
+  assert.equal(calibration.sampleCount, 20);
+});
+
+test('neutral calibration discards samples after a missing pose or a camera gap', () => {
+  const calibration = new HeadTiltNeutralCalibration();
+  for (let index = 0; index < 10; index++) calibration.update(0, index * 100);
+  assert.equal(calibration.update(null, 1000), null);
+  assert.equal(calibration.sampleCount, 0);
+  calibration.update(0, 1100);
+  calibration.update(0, 1200);
+  assert.equal(calibration.update(0, 2000), null);
+  assert.equal(calibration.sampleCount, 1);
+});
+
+test('reading time observes neutral without consuming a choice or accumulating dwell time', () => {
+  const detector = new HeadTiltSignalDetector(0);
+  detector.lockUntilNeutral();
+  assert.equal(detector.update(0, 0, false), null);
+  assert.equal(detector.status.needsNeutral, false);
+  for (const time of [100, 200, 300, 400, 500, 600, 700]) {
+    assert.equal(detector.update(0.3, time, false), null);
+  }
+  assert.equal(detector.update(0.3, 800, true), null);
+  assert.equal(detector.status.direction, 'right');
+  assert.equal(detector.status.progress, 0);
+  for (const time of [900, 1000, 1100, 1200]) assert.equal(detector.update(0.3, time), null);
+  assert.equal(detector.update(0.3, 1300), 'right');
+  assert.equal(detector.status.needsNeutral, true);
 });

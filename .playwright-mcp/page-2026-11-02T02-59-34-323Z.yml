@@ -1,0 +1,108 @@
+- generic [ref=e22]:
+  - banner [ref=e24]:
+    - generic [ref=e25]:
+      - button [ref=e26] [cursor=pointer]:
+        - img "Robot Kiến Sáng (kien-sang-main.png)" [ref=e27]
+      - generic [ref=e32]:
+        - generic [ref=e33]:
+          - heading "Robot Kiến Sáng" [level=1] [ref=e34]
+          - button "📷 kien-sang-main.png" [ref=e35]
+        - paragraph [ref=e36]: Thử tài Phân loại Rác • Lớp 2A5
+    - generic [ref=e37]:
+      - button "Bé tự kéo thả" [ref=e38]
+      - button "Nhờ Kiến Sáng" [ref=e45]
+      - button "Thử tài phân loại rác" [ref=e50]
+      - button "Nghiêng đầu" [ref=e55]
+    - generic [ref=e63]:
+      - generic [ref=e64]: "Sao:"
+      - generic [ref=e65]: "0"
+      - generic [ref=e66]: / 20
+    - generic [ref=e68]:
+      - button "Trang Phục Bạn Kiến 192/215" [ref=e69]:
+        - generic [ref=e72]: Trang Phục Bạn Kiến
+        - generic [ref=e73]: 192/215
+      - button "2 Thùng rác" [ref=e74]
+      - button "Ảnh 16 rác 15/15" [ref=e80]:
+        - generic [ref=e84]: Ảnh 16 rác
+        - generic [ref=e85]: 15/15
+      - button "Giọng bé" [ref=e86]
+      - button "Xuất HTML Offline" [ref=e91] [cursor=pointer]:
+        - generic [ref=e95]: Xuất
+        - generic [ref=e96]: HTML Offline
+      - button "Tải file Scratch (.sb3)" [ref=e97]
+      - button "Chơi lại từ đầu" [ref=e104]
+  - generic [ref=e108]:
+    - generic:
+      - generic:
+        - generic:
+          - generic: 🌿🌸
+          - generic: Sân trường
+        - button "Đi ra sân trường" [ref=e109] [cursor=pointer]
+      - generic:
+        - generic:
+          - generic: ☀️🌳
+          - generic: Nắng ấm
+        - button "Đến khu vườn Nắng Ấm" [ref=e110] [cursor=pointer]
+      - region "Hướng dẫn chơi trên bảng phấn" [ref=e111]:
+        - generic [ref=e113]:
+          - generic [ref=e114]: ⭐
+          - generic [ref=e115]: Đời Đời Nhớ Ơn Bác Hồ Vĩ Đại
+          - generic [ref=e116]: ⭐
+        - generic [ref=e117]:
+          - generic [ref=e118]:
+            - heading "LỚP 2A5 FPT SCHOOL • GIỮ GÌN VỆ SINH LỚP HỌC SẠCH ĐẸP" [level=2] [ref=e119]
+            - paragraph [ref=e120]: "\"Tuổi nhỏ làm việc nhỏ – Tùy theo sức của mình\""
+          - generic [ref=e121]:
+            - generic [ref=e122]:
+              - generic [ref=e123]: 🍃
+              - generic [ref=e124]:
+                - paragraph [ref=e125]: Thùng Xanh Lá
+                - paragraph [ref=e126]: Rác thức ăn, hoa quả, cây cỏ
+            - generic [ref=e127]:
+              - generic [ref=e128]: ♻️
+              - generic [ref=e129]:
+                - paragraph [ref=e130]: Thùng Cam / Xanh Dương
+                - paragraph [ref=e131]: Hộp sữa, chai nhựa, lon, giấy
+            - paragraph [ref=e132]: "Cách chơi: Chạm kéo rác vào thùng hoặc chọn rác rồi chọn thùng để nhờ Kiến Sáng.Điện thoại: Ở chế độ Nhờ Kiến Sáng, dùng các nút mũi tên và nút ✋ để nhặt / thả rác.Bàn phím: Giữ phím mũi tên ⬆️⬇️➡️⬅️️ để di chuyển; Space / Enter để nhặt hoặc thả rác."
+          - generic [ref=e133]:
+            - generic [ref=e134]: 🖍️ Diệp Anh - Hải Quân - Phúc Hưng
+            - generic [ref=e135]: Bé ơi hãy giúp bạn Kiến Sáng nhé! 🤖
+    - button "Trang Phục Bạn Kiến 192/215" [ref=e137] [cursor=pointer]:
+      - generic [ref=e140]: Trang Phục Bạn Kiến
+      - generic [ref=e141]: 192/215
+    - button "Thùng Rác Xanh (Hữu Cơ)" [ref=e143] [cursor=pointer]:
+      - button "Đổi ảnh" [ref=e144]
+      - img "Thùng Rác Xanh (Hữu Cơ)" [ref=e150]
+      - generic [ref=e151]: 🍃 Thức ăn & Cây cỏ
+    - status "Gợi ý tái sử dụng"
+    - button "Thùng Rác Cam (Tái Chế)" [ref=e153] [cursor=pointer]:
+      - button "Đổi ảnh" [ref=e154]
+      - img "Thùng Rác Cam (Tái Chế)" [ref=e160]
+      - generic [ref=e161]: ♻️ Hộp sữa, chai & lon
+    - generic:
+      - generic:
+        - generic:
+          - button "Mở Xưởng Trang Phục Scratch của Bạn Kiến Sáng" [ref=e162]
+          - generic:
+            - generic:
+              - img "Bạn Kiến Sáng - tim_rac_01"
+    - button "Lõi / Vỏ táo Lõi / Vỏ táo" [ref=e165]:
+      - generic [ref=e166]:
+        - img "Lõi / Vỏ táo"
+      - generic [ref=e167]: Lõi / Vỏ táo
+    - button "Vỏ hộp sữa Vỏ hộp sữa" [ref=e168]:
+      - generic [ref=e169]:
+        - img "Vỏ hộp sữa"
+      - generic [ref=e170]: Vỏ hộp sữa
+    - button "Giầy cũ Giầy cũ" [ref=e171]:
+      - generic [ref=e172]:
+        - img "Giầy cũ"
+      - generic [ref=e173]: Giầy cũ
+    - button "Xương đùi gà Xương đùi gà" [ref=e174]:
+      - generic [ref=e175]:
+        - img "Xương đùi gà"
+      - generic [ref=e176]: Xương đùi gà
+    - button "Ống nhựa (ống hút) Ống nhựa (ống hút)" [ref=e177]:
+      - generic [ref=e178]:
+        - img "Ống nhựa (ống hút)"
+      - generic [ref=e179]: Ống nhựa (ống hút)

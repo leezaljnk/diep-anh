@@ -72,6 +72,8 @@ Màn chơi mới cần được biểu diễn như một giá trị scene/mode r
 
 ### Màn hình chơi
 
+- Phản hồi hiện tại của mode này không phát giọng nói: chỉ dùng `playSuccessSfx` khi đúng và `playErrorSfx` khi sai. Giữ đáp án cùng lời giải thích trên màn hình 4 giây rồi tự chuyển câu, kể cả câu cuối trước tổng kết.
+- Trả lời đúng có hiệu ứng tung hoa; trả lời sai có mặt buồn và giọt nước mắt nhẹ kèm lời động viên. Tắt các chuyển động này khi người chơi bật `prefers-reduced-motion`; hiệu ứng không chặn điều khiển và được dọn khi chuyển câu hoặc thoát game.
 - Khu vực chính hiển thị câu hỏi bằng chữ, rõ và đủ lớn để bé đọc trước khi chọn, ví dụ **“Vỏ chuối thuộc nhóm nào?”**; kèm tên/ảnh vật phẩm, số lượt và điểm. Câu hỏi phải nêu rõ yêu cầu phân loại, không chỉ đưa ảnh rác mà không có hướng dẫn.
 - Hai vùng chọn có nhãn, màu sắc và biểu tượng: **Hữu cơ** và **Tái chế**. Không chỉ dựa vào màu để truyền tải đáp án.
 - Nếu camera hoạt động, hiển thị preview nhỏ có thể ẩn và hướng dẫn trực quan trái/phải; không cần vẽ skeleton trong phiên bản đầu.
@@ -102,14 +104,15 @@ Lỗi quyền/model/thiết bị không hỗ trợ phải có trạng thái riê
 
 ### 5.2 Diễn giải cử động
 
-Mục tiêu là chọn **dịch chuyển đầu sang trái/phải**, không tuyên bố đo “góc nghiêng” bằng độ lệch ngang của mũi so với tai. Hai phép đo này khác nhau.
+Mục tiêu hiện tại là nhận **nghiêng đầu sang trái/phải tại chỗ** (roll trong mặt phẳng ảnh), thay cho dịch chuyển ngang mũi so với vai. Việc đổi phép đo này khắc phục trường hợp người chơi đã nghiêng đầu nhưng game không phản hồi. Không suy ra góc nghiêng 3D từ độ lệch mũi.
 
-- Dùng landmark mũi và hai vai (hoặc cặp landmark ổn định được kiểm chứng) để tính độ dịch ngang tương đối với trung điểm hai vai, chuẩn hóa theo bề rộng vai. Ví dụ: `offset = (nose.x - shoulderMidX) / shoulderWidth`.
-- Loại frame có landmark thiếu, visibility thấp, người chơi ngoài khung hoặc bề rộng vai quá nhỏ.
+- Dùng hai landmark mắt của Pose Landmarker (2 và 5), sắp theo tọa độ ngang của ảnh. Tính roll 2D bằng `atan2(deltaY * videoHeight, deltaX * videoWidth)` để không làm sai góc với video khác tỷ lệ. Không yêu cầu mũi hoặc vai phải dịch chuyển.
+- Loại frame có mắt thiếu, visibility thấp, nằm ngoài khung hoặc khoảng cách hai mắt quá nhỏ. Hiệu chỉnh bằng 20 khung ổn định liên tiếp; mất tín hiệu hoặc gián đoạn khung hình phải hủy các mẫu chưa đủ.
 - Camera preview có thể được phản chiếu cho trải nghiệm quen thuộc; phải ánh xạ trái/phải trong tọa độ landmark nhất quán và kiểm thử trên camera thật. Không đảo hướng bằng phỏng đoán.
-- Hiệu chỉnh tư thế trung tính sau khi người chơi ngồi/đứng thoải mái và nhìn thẳng. Ngưỡng phải được cấu hình/đo thực nghiệm trên thiết bị mục tiêu, không mặc định một giá trị `0.05` phù hợp mọi người.
+- Hiệu chỉnh tư thế trung tính sau khi người chơi ngồi/đứng thoải mái và nhìn thẳng. Ngưỡng vào hiện là 10 độ và ngưỡng về giữa là 5 độ, tính tương đối với roll đã hiệu chỉnh; đây là góc 2D trong ảnh, cần tiếp tục xác minh trên thiết bị mục tiêu.
 - Làm mượt tín hiệu ngắn hạn; yêu cầu vượt ngưỡng liên tục trong một khoảng dwell-time trước khi chọn. Dùng ngưỡng vào/ra khác nhau (hysteresis), sau đó khóa lựa chọn cho tới khi trở về vùng trung tính.
 - Chỉ phát tối đa một câu trả lời cho mỗi lượt. Sau feedback, yêu cầu trở về tư thế trung tính trước khi nhận lựa chọn tiếp theo.
+- Trong khoảng đọc câu hỏi vẫn quan sát tư thế trung tính nhưng không cộng dwell-time hay chốt lựa chọn. Hiển thị tín hiệu nghiêng, hướng đang giữ, tiến độ giữ và yêu cầu về giữa để camera không chỉ báo chung chung là đã bật. Khi camera tắt do đổi tab, cho phép bật lại và hiệu chỉnh mà giữ nguyên câu hỏi và điểm.
 
 ### 5.3 Vòng chơi
 
@@ -223,7 +226,7 @@ Mục tiêu là chọn **dịch chuyển đầu sang trái/phải**, không tuy�
 - Nhận diện tư thế toàn thân, cử chỉ tay, nhiều người chơi hoặc theo dõi người chơi liên tục.
 - Gửi camera lên cloud, lưu video, phân tích hành vi hoặc bảng xếp hạng.
 - Tự động dùng webcam ngay khi mở ứng dụng.
-- Đo góc nghiêng đầu theo độ nếu chưa có thuật toán và kiểm chứng riêng.
+- Suy ra góc nghiêng đầu 3D hoặc góc cổ thực tế từ phép đo roll 2D trong ảnh.
 - Thay thế/di chuyển game tái sử dụng hoặc thay đổi luật phân loại rác hiện có.
 
 ## 9. Prompt ban đầu chi tiết
@@ -237,7 +240,7 @@ Có thể dùng prompt sau để giao việc triển khai sau khi chốt các đ
 > 1. Thêm một mode cấp cao có thể vào/thoát theo pattern chuyển màn hiện có. Không dùng `isSortingGameOpen` cho mode mới vì biến đó điều khiển game tái sử dụng.
 > 2. Mỗi lượt hiển thị câu hỏi bằng chữ đủ lớn, dễ đọc (ví dụ **“Vỏ chuối thuộc nhóm nào?”**), ảnh/tên vật phẩm và hai lựa chọn **Hữu cơ** / **Tái chế**. Bé cần có thời gian đọc câu hỏi trước khi camera bắt đầu nhận cử động. Dùng đúng kiểu `TrashCategory` (`organic | recyclable`), không tạo category “inorganic”.
 > 3. Có màn hình vào game với hai lựa chọn: **Bật camera** và **Chơi bằng nút**. Không xin quyền camera trước khi người chơi chủ động chọn bật. Nút lớn và bàn phím phải đủ để chơi trọn ván không cần camera.
-> 4. Nếu người chơi bật camera, nhận biết việc dịch chuyển đầu sang trái/phải trên thiết bị, không tải hình ảnh hoặc landmark lên server và không lưu video. Thể hiện rõ camera đang bật, cho phép tắt camera bất kỳ lúc nào.
+> 4. Nếu người chơi bật camera, nhận biết nghiêng đầu sang trái/phải tại chỗ bằng roll 2D trên thiết bị, không tải hình ảnh hoặc landmark lên server và không lưu video. Thể hiện rõ camera đang bật và tín hiệu đang nhận, cho phép tắt hoặc hiệu chỉnh camera bất kỳ lúc nào.
 > 5. Dùng chung một hàm xử lý câu trả lời cho camera, nút và bàn phím. Mỗi lượt chỉ được tính một lần; đáp án đúng/sai có hiệu ứng trực quan và âm thanh vui nhộn riêng biệt. Ưu tiên `playSuccessSfx` / `playErrorSfx` trong `src/utils/audio.ts`; nếu cần SFX mới thì tích hợp theo quy ước asset/audio hiện có. Có nút tắt âm thanh; hiệu ứng âm thanh không được chồng lặp hoặc làm chậm lượt.
 > 6. Chọn số lượt và luật điểm phù hợp với UI hiện có; giữ điểm mode mới độc lập với điểm game chính. Tránh lặp liên tiếp nếu ngân hàng câu hỏi cho phép.
 > 7. Ảnh vật phẩm phải lấy từ `public/images/trash/` và `public/images/thu-tai-phan-loai/`. Tạo mapping rõ ràng theo ID, xác minh ảnh đúng nội dung; không mặc định mọi vật phẩm trong data đều có ảnh cùng tên ở cả hai thư mục. Dùng fallback an toàn nếu thiếu ảnh.
@@ -249,7 +252,7 @@ Có thể dùng prompt sau để giao việc triển khai sau khi chốt các đ
 >
 > - Đánh giá và chỉ dùng một giải pháp pose detection (ưu tiên `@mediapipe/tasks-vision` đóng gói qua Vite); không chèn script CDN tùy tiện, không thêm dependency trước khi kiểm tra bundle và browser support trên GitHub Pages.
 > - Camera chỉ khởi tạo sau thao tác người dùng; kiểm tra API/secure context và trình bày lỗi rõ ràng khi quyền bị từ chối, camera bận, không có thiết bị hoặc model không tải được.
-> - Tính dịch chuyển ngang tương đối giữa mũi và trung điểm hai vai, chuẩn hóa theo bề rộng vai và hiệu chỉnh tư thế neutral. Không coi `nose.x - midpoint(ears.x)` là phép đo góc nghiêng.
+> - Tính roll 2D từ đường nối hai mắt, quy đổi tọa độ theo chiều rộng/cao video trước khi dùng `atan2`, rồi hiệu chỉnh tư thế neutral. Không dùng độ lệch mũi-vai hoặc mũi-tai thay cho nghiêng đầu; không tuyên bố đây là góc nghiêng 3D.
 > - Bỏ qua landmark thiếu/độ tin cậy thấp; làm mượt; dùng dwell-time, hysteresis, vùng neutral và khóa một lựa chọn cho mỗi lượt. Dùng ngưỡng có thể hiệu chỉnh bằng kiểm thử thay vì mặc định một hằng số chưa đo.
 > - Kiểm tra chiều trái/phải nếu preview bị mirror; dùng cùng một quy ước tọa độ cho AI và hướng dẫn UI.
 > - Dừng mọi `MediaStreamTrack`, callback vòng lặp và model/task khi tắt camera, tạm dừng, thoát hoặc unmount. Không chạy nhận diện khi tab ẩn.

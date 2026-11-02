@@ -1600,7 +1600,6 @@ export default function App() {
           <React.Suspense fallback={modalLoadingFallback}>
             <HeadTiltSortingGame
               onExit={() => setIsHeadTiltGameOpen(false)}
-              triggerSpeech={triggerSpeech}
               customMascotUrl={customMascotUrl}
               customTrashImages={customTrashImages}
             />

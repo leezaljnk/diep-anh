@@ -1,0 +1,18 @@
+- dialog [ref=e3]:
+  - generic [ref=e4]:
+    - img "FPT Schools – Deep Learning with Love, năm học 2026–2027. Các bạn học sinh cùng robot trong không gian công nghệ." [ref=e6]
+    - generic [ref=e7]:
+      - generic [ref=e8]:
+        - paragraph [ref=e9]: Dự án học tập · FPT Cầu Giấy
+        - heading "Robot Kiến Sáng Thử tài phân loại rác" [level=1] [ref=e10]:
+          - text: Robot Kiến Sáng
+          - generic [ref=e11]: Thử tài phân loại rác
+        - paragraph [ref=e12]: Cùng Kiến Sáng khám phá lớp học, chăm sóc sân trường và học cách phân loại rác. Mỗi hành động nhỏ, thêm một mầm xanh!
+        - generic [ref=e13]:
+          - generic [ref=e14]: Diệp Anh
+          - generic [ref=e15]: Hải Quân
+          - generic [ref=e16]: Phúc Hưng
+      - generic [ref=e17]:
+        - paragraph [ref=e18]: Học vui · Sống xanh 🌱
+        - button "Đang chuẩn bị trò chơi…" [disabled] [ref=e19]
+        - status [ref=e20]: Đang tải hình ảnh và chuẩn bị khu vui chơi…

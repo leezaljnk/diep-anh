@@ -1,0 +1,22 @@
+- main [ref=e180]:
+  - generic [ref=e181]:
+    - button "Về màn chơi chính" [ref=e182]
+    - heading "Nghiêng đầu phân loại rác" [level=1] [ref=e186]
+    - button "Tắt âm thanh" [ref=e188]
+  - generic [ref=e194]:
+    - generic [ref=e197]:
+      - generic [ref=e198]:
+        - img "Kiến Sáng" [ref=e199]
+        - generic [ref=e200]:
+          - paragraph [ref=e201]: Trò chơi mới
+          - heading "Nghiêng đầu phân loại rác" [level=2] [ref=e202]: Nghiêng đầuphân loại rác
+      - paragraph [ref=e203]:
+        - text: Mỗi lượt có một món rác. Chọn
+        - strong [ref=e204]: Hữu cơ
+        - text: hoặc
+        - strong [ref=e205]: Tái chế
+        - text: bằng nút, bàn phím, hoặc cử động đầu.
+    - generic [ref=e206]:
+      - paragraph [ref=e207]: Camera chỉ nhận biết chuyển động trên thiết bị, không ghi hoặc gửi hình ảnh. Hãy nhờ người lớn hỗ trợ nếu cần bật camera.
+      - button "Bật camera" [ref=e208]
+      - button "Chơi bằng nút" [ref=e212]
