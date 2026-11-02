@@ -1,11 +1,13 @@
 import assert from 'node:assert/strict';
-import { existsSync } from 'node:fs';
+import { existsSync, readdirSync } from 'node:fs';
 import { test } from 'node:test';
-import { TRASH_ITEMS } from '../src/data/trashItems';
+import { HEAD_TILT_TRASH_ITEMS } from '../src/data/headTiltTrashItems';
 import {
   createHeadTiltRounds,
   evaluateHeadTiltChoice,
   getHeadRollRadians,
+  getHeadTiltCountdown,
+  isValidHeadTiltRoundCount,
   getShoulderRelativeOffset,
   headTiltDirectionToCategory,
   isHeadTiltCameraReady,
@@ -16,23 +18,67 @@ import {
   median,
 } from '../src/utils/headTiltSorting';
 
-test('a game has eight unique, shuffled questions balanced across categories', () => {
-  const rounds = createHeadTiltRounds(TRASH_ITEMS, () => 0.5);
+test('a game defaults to twenty shuffled camera images without repeats', () => {
+  const rounds = createHeadTiltRounds(undefined, () => 0.5);
+  assert.equal(HEAD_TILT_ROUND_COUNT, 20);
   assert.equal(rounds.length, HEAD_TILT_ROUND_COUNT);
   assert.equal(new Set(rounds.map(({ item }) => item.id)).size, rounds.length);
-  assert.equal(rounds.filter(({ item }) => item.category === 'organic').length, 4);
-  assert.equal(rounds.filter(({ item }) => item.category === 'recyclable').length, 4);
-  assert.throws(() => createHeadTiltRounds(TRASH_ITEMS.slice(0, 7)), /ít nhất bốn vật phẩm/);
+  assert(rounds.every(({ item }) => HEAD_TILT_TRASH_ITEMS.some(candidate => candidate.id === item.id)));
+  assert.notDeepEqual(rounds.map(({ item }) => item.id), HEAD_TILT_TRASH_ITEMS.slice(0, 20).map(item => item.id));
 });
 
-test('answers use the existing categories and every trash question has an existing mapped image', () => {
-  for (const item of TRASH_ITEMS) {
-    assert.equal(typeof HEAD_TILT_TRASH_IMAGES[item.id], 'string', item.id);
-    assert(existsSync(new URL(`../public/${HEAD_TILT_TRASH_IMAGES[item.id].replace(/^\.\//, '')}`, import.meta.url)));
-    assert.equal(evaluateHeadTiltChoice(item, item.category), true);
-    assert.equal(evaluateHeadTiltChoice(item, item.category === 'organic' ? 'recyclable' : 'organic'), false);
+test('custom lengths exhaust the pool before repeating and avoid consecutive repeats at cycle boundaries', () => {
+  const poolSize = HEAD_TILT_TRASH_ITEMS.length;
+  for (const count of [1, 7, 20, poolSize, poolSize * 2 + 7]) {
+    const rounds = createHeadTiltRounds(undefined, () => 0.999, count);
+    assert.equal(rounds.length, count);
+    for (let start = 0; start < count; start += poolSize) {
+      const cycle = rounds.slice(start, start + poolSize);
+      assert.equal(new Set(cycle.map(({ item }) => item.id)).size, cycle.length);
+    }
+    for (let index = 1; index < rounds.length; index++) {
+      assert.notEqual(rounds[index].item.id, rounds[index - 1].item.id);
+    }
   }
-  assert.equal(Object.keys(HEAD_TILT_TRASH_IMAGES).length, TRASH_ITEMS.length);
+  const smallPool = HEAD_TILT_TRASH_ITEMS.slice(0, 2);
+  const rounds = createHeadTiltRounds(smallPool, () => 0, 5);
+  assert.deepEqual(rounds.map(({ item }) => item.id), [smallPool[1].id, smallPool[0].id, smallPool[1].id, smallPool[0].id, smallPool[1].id]);
+  assert.equal(createHeadTiltRounds(smallPool.slice(0, 1), () => 0, 3).length, 3);
+});
+
+test('question counts accept positive integers only', () => {
+  for (const count of [0, -1, 1.5, NaN, Infinity, Number.MAX_SAFE_INTEGER + 1]) {
+    assert.equal(isValidHeadTiltRoundCount(count), false);
+    assert.throws(() => createHeadTiltRounds(undefined, undefined, count), /số nguyên dương/);
+  }
+  assert.equal(isValidHeadTiltRoundCount(1), true);
+  assert.equal(isValidHeadTiltRoundCount(200), true);
+  assert.throws(() => createHeadTiltRounds([]), /ít nhất một ảnh/);
+});
+
+test('countdown warns every second from five through zero and keeps warning after zero', () => {
+  for (let elapsed = 0; elapsed <= 30; elapsed++) {
+    assert.deepEqual(getHeadTiltCountdown(elapsed), {
+      remaining: Math.max(0, 10 - elapsed),
+      warning: elapsed >= 5,
+    });
+  }
+  assert.deepEqual(getHeadTiltCountdown(0), { remaining: 10, warning: false });
+});
+
+test('camera catalogue covers every image in both folders and maps each to its folder category', () => {
+  for (const [folder, category] of [['huu_co', 'organic'], ['vo_co', 'recyclable']] as const) {
+    const files = readdirSync(new URL(`../public/images/camera/${folder}/`, import.meta.url)).filter(file => file.endsWith('.png')).sort();
+    const items = HEAD_TILT_TRASH_ITEMS.filter(item => item.category === category);
+    assert.deepEqual(items.map(item => `${item.id}.png`).sort(), files);
+    for (const item of items) {
+      assert.equal(HEAD_TILT_TRASH_IMAGES[item.id], `./images/camera/${folder}/${item.id}.png`);
+      assert(existsSync(new URL(`../public/${HEAD_TILT_TRASH_IMAGES[item.id].replace(/^\.\//, '')}`, import.meta.url)));
+      assert.equal(evaluateHeadTiltChoice(item, item.category), true);
+      assert.equal(evaluateHeadTiltChoice(item, item.category === 'organic' ? 'recyclable' : 'organic'), false);
+    }
+  }
+  assert.equal(Object.keys(HEAD_TILT_TRASH_IMAGES).length, HEAD_TILT_TRASH_ITEMS.length);
 });
 
 test('pose offset is normalized by shoulder width and rejects unreliable landmarks', () => {
@@ -91,7 +137,7 @@ test('mirrored camera directions match the visible left and right choices', () =
 });
 
 test('opposite camera movements cannot both be correct for the same question', () => {
-  for (const item of TRASH_ITEMS) {
+  for (const item of HEAD_TILT_TRASH_ITEMS) {
     const answers = [-0.3, 0.3].map(offset => {
       const detector = new HeadTiltSignalDetector(0);
       let direction: ReturnType<HeadTiltSignalDetector['update']> = null;

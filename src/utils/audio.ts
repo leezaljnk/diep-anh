@@ -55,6 +55,29 @@ export const playDropSfx = () => {
   }
 };
 
+export const playCountdownSfx = (volume = 0.06) => {
+  try {
+    const ctx = getAudioContext();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(660, ctx.currentTime);
+    gain.gain.setValueAtTime(0, ctx.currentTime);
+    gain.gain.linearRampToValueAtTime(volume, ctx.currentTime + 0.01);
+    gain.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.12);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.onended = () => {
+      osc.disconnect();
+      gain.disconnect();
+    };
+    osc.start();
+    osc.stop(ctx.currentTime + 0.13);
+  } catch {
+    // Audio may be unavailable; answering must remain possible.
+  }
+};
+
 export const playSuccessSfx = () => {
   try {
     const ctx = getAudioContext();

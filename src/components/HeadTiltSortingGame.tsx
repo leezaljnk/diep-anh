@@ -19,12 +19,16 @@ import {
   VolumeX,
 } from 'lucide-react';
 import type { TrashCategory } from '../types';
-import { TRASH_ITEMS } from '../data/trashItems';
-import { playErrorSfx, playSuccessSfx } from '../utils/audio';
+import { HeadTiltGameStatus } from './HeadTiltGameStatus';
+import { playCountdownSfx, playErrorSfx, playSuccessSfx } from '../utils/audio';
 import {
   createHeadTiltRounds,
   evaluateHeadTiltChoice,
   getHeadRollRadians,
+  getHeadTiltCountdown,
+  HEAD_TILT_QUESTION_SECONDS,
+  HEAD_TILT_ROUND_COUNT,
+  isValidHeadTiltRoundCount,
   HEAD_TILT_CALIBRATION_SAMPLE_COUNT,
   HEAD_TILT_ENTER_RADIANS,
   HEAD_TILT_EXIT_RADIANS,
@@ -47,11 +51,11 @@ interface HeadTiltSortingGameProps {
   customTrashImages: Record<string, string>;
 }
 
-const FEEDBACK_DURATION_MS = 4000;
+const FEEDBACK_DURATION_MS = 1200;
 const QUESTION_READ_DELAY_MS = 1100;
 const CATEGORY_LABELS: Record<TrashCategory, string> = {
   organic: 'Hữu cơ',
-  recyclable: 'Tái chế',
+  recyclable: 'Vô cơ',
 };
 
 const cameraErrorMessage = (error: unknown) => {
@@ -72,17 +76,19 @@ const cameraErrorMessage = (error: unknown) => {
 export const HeadTiltSortingGame: React.FC<HeadTiltSortingGameProps> = ({
   onExit,
   customMascotUrl,
-  customTrashImages,
 }) => {
   const [phase, setPhase] = useState<GamePhase>('intro');
   const [cameraState, setCameraState] = useState<HeadTiltCameraState>('off');
   const [cameraError, setCameraError] = useState('');
   const [lastAnswerCorrect, setLastAnswerCorrect] = useState(false);
-  const [lastChoice, setLastChoice] = useState<TrashCategory | null>(null);
+  const [questionCount, setQuestionCount] = useState(String(HEAD_TILT_ROUND_COUNT));
+  const validQuestionCount = isValidHeadTiltRoundCount(Number(questionCount));
+  const [secondsRemaining, setSecondsRemaining] = useState(HEAD_TILT_QUESTION_SECONDS);
+  const elapsedSecondsRef = useRef(0);
+  const soundEnabledRef = useRef(true);
   const [rounds, setRounds] = useState<ReturnType<typeof createHeadTiltRounds>>([]);
   const [roundIndex, setRoundIndex] = useState(0);
   const [score, setScore] = useState(0);
-  const [feedback, setFeedback] = useState('');
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [previewVisible, setPreviewVisible] = useState(true);
   const [faceDetected, setFaceDetected] = useState(false);
@@ -105,6 +111,25 @@ export const HeadTiltSortingGame: React.FC<HeadTiltSortingGameProps> = ({
   const lastInferenceAtRef = useRef(0);
   const currentRound = rounds[roundIndex];
   const currentItem = currentRound?.item;
+  const clockRunning = (phase === 'playing' || phase === 'feedback') && cameraState === 'ready';
+
+  useEffect(() => { soundEnabledRef.current = soundEnabled; }, [soundEnabled]);
+
+  useEffect(() => {
+    elapsedSecondsRef.current = 0;
+    setSecondsRemaining(HEAD_TILT_QUESTION_SECONDS);
+  }, [roundIndex, rounds]);
+
+  useEffect(() => {
+    if (!clockRunning) return;
+    const interval = window.setInterval(() => {
+      if (phaseRef.current !== 'playing' && phaseRef.current !== 'feedback') return;
+      const countdown = getHeadTiltCountdown(++elapsedSecondsRef.current);
+      setSecondsRemaining(countdown.remaining);
+      if (countdown.warning && soundEnabledRef.current) playCountdownSfx();
+    }, 1000);
+    return () => window.clearInterval(interval);
+  }, [clockRunning, roundIndex, rounds]);
 
   useEffect(() => {
     phaseRef.current = phase;
@@ -183,17 +208,18 @@ export const HeadTiltSortingGame: React.FC<HeadTiltSortingGameProps> = ({
   }, [stopCamera]);
 
   const beginRounds = useCallback(() => {
-    const nextRounds = createHeadTiltRounds(TRASH_ITEMS);
+    const nextRounds = createHeadTiltRounds(undefined, undefined, Number(questionCount));
     setRounds(nextRounds);
     setRoundIndex(0);
     setScore(0);
-    setFeedback('');
-    setLastChoice(null);
     phaseRef.current = 'playing';
     setPhase('playing');
-  }, []);
+  }, [questionCount]);
 
   const beginCameraGame = useCallback(async (newGame = false) => {
+    if (!validQuestionCount) return;
+    // Unlock Web Audio in the button gesture before the first delayed warning.
+    if (soundEnabled) playCountdownSfx(0);
     if (!window.isSecureContext || !navigator.mediaDevices?.getUserMedia) {
       setCameraError('Camera cần trang HTTPS và trình duyệt hỗ trợ. Hãy mở game bằng trình duyệt có camera.');
       setCameraState('error');
@@ -269,7 +295,7 @@ export const HeadTiltSortingGame: React.FC<HeadTiltSortingGameProps> = ({
       setCameraError(cameraErrorMessage(error));
       setCameraState('error');
     }
-  }, [beginRounds]);
+  }, [beginRounds, soundEnabled, validQuestionCount]);
 
   const submitChoice = useCallback((choice: TrashCategory) => {
     if (phaseRef.current !== 'playing' || !currentItem || !isHeadTiltCameraReady(cameraState, streamRef.current?.active ?? false)) return;
@@ -278,15 +304,12 @@ export const HeadTiltSortingGame: React.FC<HeadTiltSortingGameProps> = ({
     detectorRef.current?.lockUntilNeutral();
     if (detectorRef.current) setTrackingStatus(detectorRef.current.status);
     const isCorrect = evaluateHeadTiltChoice(currentItem, choice);
-    setLastChoice(choice);
     setLastAnswerCorrect(isCorrect);
     if (isCorrect) {
       setScore(previous => previous + 1);
-      setFeedback(`Chính xác! ${currentItem.nameVi} thuộc nhóm ${CATEGORY_LABELS[currentItem.category]}.`);
       if (soundEnabled) playSuccessSfx();
-    } else {
-      setFeedback(`Chưa đúng rồi. ${currentItem.nameVi} thuộc nhóm ${CATEGORY_LABELS[currentItem.category]}. ${currentItem.hint}`);
-      if (soundEnabled) playErrorSfx();
+    } else if (soundEnabled) {
+      playErrorSfx();
     }
 
     feedbackTimeoutRef.current = window.setTimeout(() => {
@@ -382,19 +405,20 @@ export const HeadTiltSortingGame: React.FC<HeadTiltSortingGameProps> = ({
   const cameraCandidate = trackingStatus?.direction ? headTiltDirectionToCategory(trackingStatus.direction) : null;
   const cameraTiltValue = Math.max(-1, Math.min(1, -(trackingStatus?.offset ?? 0) / HEAD_TILT_ENTER_RADIANS));
   const imageUrl = currentItem && !failedImages[currentItem.id]
-    ? customTrashImages[currentItem.id] || HEAD_TILT_TRASH_IMAGES[currentItem.id]
+    ? HEAD_TILT_TRASH_IMAGES[currentItem.id]
     : undefined;
   return (
     <main className="absolute inset-0 z-40 flex max-h-dvh min-h-0 flex-col overflow-hidden bg-white text-slate-900">
       <canvas ref={celebrationCanvasRef} aria-hidden="true" className="pointer-events-none absolute inset-0 z-50 h-full w-full" />
-      <header className="flex min-h-12 shrink-0 items-center justify-between gap-2 border-b border-emerald-950/15 bg-white/90 px-2 py-1 lg:min-h-14 lg:px-6 lg:py-2">
+      <header className="shrink-0 border-b border-emerald-100 bg-white/95">
+        <div className="flex min-h-12 items-center justify-between gap-2 px-2 py-1 lg:min-h-14 lg:px-6 lg:py-2">
         <button type="button" onClick={onExit} className="inline-flex min-h-10 items-center gap-2 rounded-lg px-2 text-xs font-bold text-slate-700 hover:bg-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-emerald-700 lg:px-3 lg:text-sm">
           <ArrowLeft className="h-4 w-4" />
           <span>Về màn chơi chính</span>
         </button>
         <h1 className="hidden text-base font-black text-emerald-950 lg:block">Nghiêng đầu phân loại rác</h1>
         <div className="flex items-center gap-1">
-          <button type="button" onClick={() => setSoundEnabled(value => !value)} className="grid size-10 place-items-center rounded-lg text-slate-700 hover:bg-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-emerald-700" aria-label={soundEnabled ? 'Tắt âm thanh' : 'Bật âm thanh'} title={soundEnabled ? 'Tắt âm thanh' : 'Bật âm thanh'}>
+          <button type="button" onClick={() => { if (!soundEnabled) playCountdownSfx(0); setSoundEnabled(value => !value); }} className="grid size-10 place-items-center rounded-lg text-slate-700 hover:bg-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-emerald-700" aria-label={soundEnabled ? 'Tắt âm thanh' : 'Bật âm thanh'} title={soundEnabled ? 'Tắt âm thanh' : 'Bật âm thanh'}>
             {soundEnabled ? <Volume2 className="h-5 w-5" /> : <VolumeX className="h-5 w-5" />}
           </button>
           {phase === 'playing' && (
@@ -403,6 +427,10 @@ export const HeadTiltSortingGame: React.FC<HeadTiltSortingGameProps> = ({
             </button>
           )}
         </div>
+        </div>
+        {(phase === 'playing' || phase === 'feedback') && currentItem && (
+          <HeadTiltGameStatus roundNumber={roundIndex + 1} totalRounds={rounds.length} score={score} secondsRemaining={secondsRemaining} running={clockRunning} />
+        )}
       </header>
 
       <div className="grid min-h-0 w-full flex-1 grid-cols-1 grid-rows-[auto_minmax(0,1fr)_auto] gap-2 p-2 sm:grid-cols-[minmax(220px,2fr)_minmax(0,3fr)] sm:grid-rows-[minmax(0,1fr)] sm:gap-3 sm:p-3 lg:gap-6 lg:px-6 lg:py-4 xl:px-8">
@@ -419,13 +447,18 @@ export const HeadTiltSortingGame: React.FC<HeadTiltSortingGameProps> = ({
                   </div>
                 </div>
                 <p className="max-w-lg text-sm font-medium leading-snug text-emerald-950 lg:text-base lg:leading-relaxed">
-                  Bật camera để phân loại <strong>Hữu cơ</strong> hoặc <strong>Tái chế</strong> bằng cử động đầu hoặc chạm đáp án.
+                  Bật camera để phân loại <strong>Hữu cơ</strong> hoặc <strong>Vô cơ</strong> bằng cử động đầu hoặc chạm đáp án.
                 </p>
               </div>
             </div>
             <div className="flex flex-col gap-3">
-              <p className="text-xs leading-relaxed text-slate-700 lg:text-sm">Camera xử lý trên thiết bị, không ghi hoặc gửi hình ảnh. Nhờ người lớn hỗ trợ khi cần.</p>
-              <button type="button" onClick={() => void beginCameraGame()} disabled={cameraState === 'requesting'} className="flex min-h-11 touch-manipulation items-center justify-center gap-3 rounded-lg bg-emerald-800 px-4 py-2 text-sm font-black text-white shadow-sm transition hover:bg-emerald-900 focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-emerald-500 disabled:cursor-wait disabled:opacity-60 lg:min-h-14 lg:px-5 lg:py-3 lg:text-base">
+              <label htmlFor="head-tilt-question-count" className="flex flex-wrap items-center gap-3 text-sm font-bold text-slate-800">
+                Số câu hỏi
+                <input id="head-tilt-question-count" type="number" min="1" step="1" value={questionCount} disabled={cameraState === 'requesting'} onChange={event => setQuestionCount(event.target.value)} aria-invalid={!validQuestionCount} aria-describedby={!validQuestionCount ? 'head-tilt-count-error' : undefined} className="min-h-11 w-24 rounded-lg border border-slate-400 bg-white px-3 py-2 text-slate-950 focus-visible:outline focus-visible:outline-2 focus-visible:outline-emerald-700" />
+              </label>
+              {!validQuestionCount && <p id="head-tilt-count-error" role="alert" className="text-xs font-semibold text-red-800">Nhập số câu hỏi là số nguyên lớn hơn 0.</p>}
+              <p className="text-xs leading-relaxed text-slate-700 lg:text-sm">Mỗi câu có đồng hồ 10 giây. Hết giờ, bé vẫn được chọn đáp án. Camera chỉ xử lý trên thiết bị, không ghi hoặc gửi hình ảnh.</p>
+              <button type="button" onClick={() => void beginCameraGame()} disabled={cameraState === 'requesting' || !validQuestionCount} className="flex min-h-11 touch-manipulation items-center justify-center gap-3 rounded-lg bg-emerald-800 px-4 py-2 text-sm font-black text-white shadow-sm transition hover:bg-emerald-900 focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-emerald-500 disabled:cursor-wait disabled:opacity-60 lg:min-h-14 lg:px-5 lg:py-3 lg:text-base">
                 <Camera className="h-5 w-5" />
                 {cameraState === 'requesting' ? 'Đang bật camera…' : 'Bật camera'}
               </button>
@@ -434,46 +467,31 @@ export const HeadTiltSortingGame: React.FC<HeadTiltSortingGameProps> = ({
         )}
 
         {phase === 'playing' && currentItem && (
-          <section className="contents sm:my-auto sm:flex sm:flex-col sm:gap-3 lg:gap-4" aria-live="polite">
-            <div className="col-start-1 row-start-1 flex min-w-0 flex-col gap-2">
-            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-300 pb-1 lg:gap-3 lg:pb-3">
-              <div className="flex items-center gap-3 lg:block">
-                <p className="text-xs font-bold text-slate-600 lg:text-sm">Câu {roundIndex + 1}/{rounds.length}</p>
-                <p className="text-xs font-bold text-emerald-900 lg:mt-1 lg:text-sm">Điểm đúng: {score}</p>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="h-2 w-20 overflow-hidden rounded-full bg-slate-200 lg:w-28" aria-label={`Tiến độ ${roundIndex + 1} trên ${rounds.length}`}>
-                  <div className="h-full bg-emerald-700 transition-[width] duration-300 motion-reduce:transition-none" style={{ width: `${((roundIndex + 1) / rounds.length) * 100}%` }} />
+          <section className="contents sm:flex sm:h-full sm:min-h-0 sm:flex-col sm:gap-3 lg:gap-4" aria-live="polite">
+            <div className="col-start-1 row-start-1 flex min-w-0 flex-col gap-2 sm:min-h-0 sm:flex-1 sm:rounded-3xl sm:border sm:border-emerald-100 sm:bg-gradient-to-b sm:from-emerald-50 sm:to-white sm:p-4 lg:p-6">
+            <div className="grid items-center gap-2 sm:flex sm:min-h-0 sm:flex-1 sm:flex-col sm:gap-4">
+              <div className="grid grid-cols-[minmax(0,1fr)_72px] items-center gap-2 py-1 sm:flex sm:min-h-0 sm:w-full sm:flex-1 sm:flex-col sm:gap-4 lg:gap-6">
+                <div className="min-w-0 sm:w-full">
+                  <p className="inline-flex items-center gap-1 text-[10px] font-extrabold uppercase text-emerald-800 lg:text-xs"><Sparkles className="size-3 lg:size-4" aria-hidden="true" />Bé hãy phân loại</p>
+                  <h2 className="mt-1 break-words text-lg font-black leading-snug text-slate-950 lg:mt-2 lg:text-3xl">Rác trong hình thuộc nhóm nào?</h2>
                 </div>
-                {cameraState === 'ready' && <span className="hidden rounded-md bg-emerald-100 px-2 py-1 text-xs font-bold text-emerald-900 lg:inline-flex">{faceDetected ? 'Camera đang bật' : 'Đang tìm khuôn mặt'}</span>}
-                {(cameraState === 'off' || cameraState === 'error') && <span className="hidden rounded-md bg-amber-100 px-2 py-1 text-xs font-bold text-amber-950 lg:inline-flex">Cần bật camera</span>}
-              </div>
-            </div>
-
-            <div className="grid items-center gap-2 lg:gap-4">
-              <div className="grid grid-cols-[minmax(0,1fr)_72px] items-center gap-2 py-1 lg:min-h-72 lg:grid-cols-[minmax(0,1fr)_minmax(100px,42%)] lg:gap-4 lg:py-4">
-                <div className="min-w-0">
-                  <p className="text-[10px] font-extrabold uppercase text-sky-800 lg:text-xs">Bé hãy phân loại</p>
-                  <h2 className="mt-1 break-words text-lg font-black leading-snug text-slate-950 lg:mt-2 lg:text-3xl">“{currentItem.nameVi}” thuộc nhóm nào?</h2>
-                </div>
-                <div className="relative grid aspect-square max-h-20 w-full max-w-20 place-items-center justify-self-end overflow-hidden rounded-lg bg-emerald-50 p-1 lg:max-h-80 lg:max-w-80 lg:p-3">
-                  {currentItem.category === 'organic' ? <Leaf className="absolute size-8 text-emerald-700/15 lg:size-20" aria-hidden="true" /> : <Recycle className="absolute size-8 text-sky-700/15 lg:size-20" aria-hidden="true" />}
-                  {imageUrl && <img src={imageUrl} alt={currentItem.nameVi} className="absolute inset-0 z-10 h-full w-full object-contain p-1 lg:p-3" onError={() => setFailedImages(previous => ({ ...previous, [currentItem.id]: true }))} />}
-                  {!imageUrl && <div className="relative z-10 text-center"><Sparkles className="mx-auto size-6 text-emerald-800 lg:size-12" /><span className="mt-2 hidden text-sm font-bold lg:block">{currentItem.nameVi}</span></div>}
+                <div className="relative grid aspect-square max-h-20 w-full max-w-20 place-items-center justify-self-end overflow-hidden rounded-2xl bg-emerald-50 p-1 sm:aspect-auto sm:min-h-0 sm:max-h-none sm:max-w-none sm:flex-1 sm:bg-white/80 lg:p-3">
+                  {imageUrl && <img src={imageUrl} alt="Ảnh rác cần phân loại" className="absolute inset-0 z-10 h-full w-full object-contain p-1 lg:p-3" onError={() => setFailedImages(previous => ({ ...previous, [currentItem.id]: true }))} />}
+                  {!imageUrl && <div role="status" className="relative z-10 text-center"><Sparkles className="mx-auto size-6 text-emerald-800 lg:size-12" /><span className="mt-2 text-xs font-bold">Không tải được ảnh rác</span></div>}
                 </div>
               </div>
             </div>
 
             </div>
-            <div role="group" aria-label="Đáp án" className="col-start-1 row-start-3 grid grid-cols-2 gap-2 lg:gap-5">
-              <button type="button" disabled={!canAnswer} onClick={() => submitChoice('organic')} className={`group flex min-h-14 touch-manipulation items-center justify-center gap-2 rounded-lg border-2 bg-emerald-50 px-2 py-2 text-center transition enabled:hover:-translate-y-0.5 enabled:hover:bg-emerald-100 focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-emerald-600 disabled:cursor-not-allowed disabled:opacity-50 motion-reduce:transform-none motion-reduce:transition-none lg:min-h-28 lg:flex-col lg:px-3 lg:py-3 ${cameraCandidate === 'organic' ? 'border-emerald-700 ring-2 ring-emerald-300' : 'border-emerald-800/35'}`}>
+            <div role="group" aria-label="Đáp án" className="col-start-1 row-start-3 grid shrink-0 grid-cols-2 gap-2 lg:gap-4">
+              <button type="button" disabled={!canAnswer} onClick={() => submitChoice('organic')} className={`group flex min-h-14 touch-manipulation items-center justify-center gap-2 rounded-2xl border-2 bg-emerald-50 px-2 py-2 text-center shadow-[0_3px_0_#a7f3d0] transition enabled:hover:-translate-y-0.5 enabled:hover:bg-emerald-100 focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-emerald-600 disabled:cursor-not-allowed disabled:opacity-50 motion-reduce:transform-none motion-reduce:transition-none lg:min-h-28 lg:flex-col lg:px-3 lg:py-3 ${cameraCandidate === 'organic' ? 'border-emerald-700 ring-2 ring-emerald-300' : 'border-emerald-800/35'}`}>
                 <Leaf className="size-5 text-emerald-800 lg:size-7" aria-hidden="true" />
                 <span className="text-sm font-black text-emerald-950 lg:text-lg">Hữu cơ</span>
                 <span className="hidden text-xs font-medium text-slate-600 lg:block">Lá, thức ăn, vỏ quả</span>
               </button>
-              <button type="button" disabled={!canAnswer} onClick={() => submitChoice('recyclable')} className={`group flex min-h-14 touch-manipulation items-center justify-center gap-2 rounded-lg border-2 bg-sky-50 px-2 py-2 text-center transition enabled:hover:-translate-y-0.5 enabled:hover:bg-sky-100 focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-sky-600 disabled:cursor-not-allowed disabled:opacity-50 motion-reduce:transform-none motion-reduce:transition-none lg:min-h-28 lg:flex-col lg:px-3 lg:py-3 ${cameraCandidate === 'recyclable' ? 'border-sky-700 ring-2 ring-sky-300' : 'border-sky-800/35'}`}>
+              <button type="button" disabled={!canAnswer} onClick={() => submitChoice('recyclable')} className={`group flex min-h-14 touch-manipulation items-center justify-center gap-2 rounded-2xl border-2 bg-sky-50 px-2 py-2 text-center shadow-[0_3px_0_#bae6fd] transition enabled:hover:-translate-y-0.5 enabled:hover:bg-sky-100 focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-sky-600 disabled:cursor-not-allowed disabled:opacity-50 motion-reduce:transform-none motion-reduce:transition-none lg:min-h-28 lg:flex-col lg:px-3 lg:py-3 ${cameraCandidate === 'recyclable' ? 'border-sky-700 ring-2 ring-sky-300' : 'border-sky-800/35'}`}>
                 <Recycle className="size-5 text-sky-800 lg:size-7" aria-hidden="true" />
-                <span className="text-sm font-black text-sky-950 lg:text-lg">Tái chế</span>
+                <span className="text-sm font-black text-sky-950 lg:text-lg">Vô cơ</span>
                 <span className="hidden text-xs font-medium text-slate-600 lg:block">Giấy, nhựa, kim loại</span>
               </button>
             </div>
@@ -490,11 +508,7 @@ export const HeadTiltSortingGame: React.FC<HeadTiltSortingGameProps> = ({
               </>}
             </div>
             <div className="max-w-2xl">
-              <h2 className="text-lg font-black text-emerald-950 lg:text-2xl">{lastAnswerCorrect ? 'Làm tốt lắm!' : 'Mình cùng học nhé!'}</h2>
-              {lastChoice && <p className="mt-1 text-xs font-bold text-slate-600 lg:mt-3 lg:text-sm">Bé đã chọn: {CATEGORY_LABELS[lastChoice]}</p>}
-              <p className="mt-1 text-sm font-semibold leading-snug text-slate-800 lg:mt-3 lg:text-base lg:leading-relaxed">{feedback}</p>
-              <p className="mt-1 text-xs font-bold text-slate-600 lg:mt-3 lg:text-sm">Đáp án: {CATEGORY_LABELS[currentItem.category]}</p>
-              {!lastAnswerCorrect && <p className="mt-1 text-xs font-semibold text-sky-800 lg:mt-3 lg:text-sm">Không sao, mình thử câu tiếp nhé!</p>}
+              <h2 className="text-lg font-black text-emerald-950 lg:text-2xl">{lastAnswerCorrect ? 'Chính xác! Làm tốt lắm!' : 'Chưa đúng rồi, thử câu tiếp nhé!'}</h2>
             </div>
           </section>
         )}
@@ -552,7 +566,7 @@ export const HeadTiltSortingGame: React.FC<HeadTiltSortingGameProps> = ({
             <div className="col-span-2 row-start-2 flex min-h-0 flex-col gap-1 lg:gap-2" aria-label="Tín hiệu nghiêng đầu">
               <div className="hidden items-center justify-between gap-3 text-xs font-bold lg:flex">
                 <span className="flex items-center gap-1 text-emerald-800"><ArrowLeft className="size-4" />Hữu cơ</span>
-                <span className="flex items-center gap-1 text-sky-800">Tái chế<ArrowRight className="size-4" /></span>
+                <span className="flex items-center gap-1 text-sky-800">Vô cơ<ArrowRight className="size-4" /></span>
               </div>
               <div role="meter" aria-label="Hướng nghiêng đầu" aria-valuemin={-1} aria-valuemax={1} aria-valuenow={cameraTiltValue} className="relative h-3 rounded-full bg-slate-100 lg:h-5">
                 <span className="absolute bottom-0 left-1/2 top-0 w-px bg-slate-400" aria-hidden="true" />

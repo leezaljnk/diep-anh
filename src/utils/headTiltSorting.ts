@@ -1,6 +1,18 @@
-import type { TrashCategory, TrashItemDef } from '../types';
+import type { TrashCategory } from '../types';
+import { HEAD_TILT_TRASH_ITEMS, type HeadTiltTrashItem } from '../data/headTiltTrashItems';
 
-export const HEAD_TILT_ROUND_COUNT = 8;
+export const HEAD_TILT_ROUND_COUNT = 20;
+export const HEAD_TILT_QUESTION_SECONDS = 10;
+export const HEAD_TILT_WARNING_SECONDS = 5;
+
+export function isValidHeadTiltRoundCount(count: number): boolean {
+  return Number.isSafeInteger(count) && count > 0;
+}
+
+export function getHeadTiltCountdown(elapsedSeconds: number): { remaining: number; warning: boolean } {
+  const remaining = Math.max(0, HEAD_TILT_QUESTION_SECONDS - Math.floor(elapsedSeconds));
+  return { remaining, warning: remaining <= HEAD_TILT_WARNING_SECONDS };
+}
 export const HEAD_TILT_CALIBRATION_SAMPLE_COUNT = 20;
 export const HEAD_TILT_ENTER_RADIANS = Math.PI / 18;
 export const HEAD_TILT_EXIT_RADIANS = Math.PI / 36;
@@ -11,26 +23,12 @@ export function isHeadTiltCameraReady(cameraState: HeadTiltCameraState, streamAc
   return cameraState === 'ready' && streamActive;
 }
 
-export const HEAD_TILT_TRASH_IMAGES: Record<string, string> = {
-  vo_hop_sua: './images/trash/vo_hop_sua.png',
-  vo_hop_giay: './images/trash/vo_hop_giay.png',
-  giay_cu: './images/trash/giay_cu.png',
-  vo_chai: './images/trash/vo_chai.png',
-  ong_nhua: './images/trash/ong_nhua.png',
-  vo_keo: './images/trash/vo_keo.png',
-  vo_lon: './images/trash/vo_lon.png',
-  vo_chai_nhua: './images/trash/vo_chai_nhua.png',
-  xuong_ca: './images/trash/xuong_ca.png',
-  dui_ga: './images/trash/dui_ga.png',
-  vo_dua_hau: './images/trash/vo_dua_hau.png',
-  banh_mi: './images/trash/banh_mi.png',
-  la_cay: './images/trash/la_cay.png',
-  vo_chuoi: './images/trash/vo_chuoi.png',
-  vo_tao: './images/trash/vo_tao.png',
-};
+export const HEAD_TILT_TRASH_IMAGES: Record<string, string> = Object.fromEntries(
+  HEAD_TILT_TRASH_ITEMS.map(item => [item.id, item.image])
+);
 
 export interface HeadTiltRound {
-  item: TrashItemDef;
+  item: Pick<HeadTiltTrashItem, 'id' | 'category'>;
 }
 
 export function shuffleItems<T>(items: readonly T[], random: () => number = Math.random): T[] {
@@ -43,21 +41,24 @@ export function shuffleItems<T>(items: readonly T[], random: () => number = Math
 }
 
 export function createHeadTiltRounds(
-  items: readonly TrashItemDef[],
-  random: () => number = Math.random
+  items: readonly HeadTiltRound['item'][] = HEAD_TILT_TRASH_ITEMS,
+  random: () => number = Math.random,
+  roundCount = HEAD_TILT_ROUND_COUNT
 ): HeadTiltRound[] {
-  const organic = shuffleItems(items.filter(item => item.category === 'organic'), random);
-  const recyclable = shuffleItems(items.filter(item => item.category === 'recyclable'), random);
-  if (organic.length < HEAD_TILT_ROUND_COUNT / 2 || recyclable.length < HEAD_TILT_ROUND_COUNT / 2) {
-    throw new Error('Cần ít nhất bốn vật phẩm cho mỗi nhóm rác để bắt đầu trò chơi.');
+  if (!isValidHeadTiltRoundCount(roundCount)) throw new Error('Số câu hỏi phải là số nguyên dương.');
+  if (items.length === 0) throw new Error('Cần ít nhất một ảnh rác để bắt đầu trò chơi.');
+  const rounds: HeadTiltRound[] = [];
+  while (rounds.length < roundCount) {
+    const cycle = shuffleItems(items, random);
+    if (cycle.length > 1 && cycle[0].id === rounds.at(-1)?.item.id) {
+      [cycle[0], cycle[1]] = [cycle[1], cycle[0]];
+    }
+    rounds.push(...cycle.slice(0, roundCount - rounds.length).map(item => ({ item })));
   }
-  return shuffleItems([
-    ...organic.slice(0, HEAD_TILT_ROUND_COUNT / 2),
-    ...recyclable.slice(0, HEAD_TILT_ROUND_COUNT / 2),
-  ], random).map(item => ({ item }));
+  return rounds;
 }
 
-export function evaluateHeadTiltChoice(item: TrashItemDef, choice: TrashCategory): boolean {
+export function evaluateHeadTiltChoice(item: HeadTiltRound['item'], choice: TrashCategory): boolean {
   return item.category === choice;
 }
 

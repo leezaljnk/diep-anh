@@ -1,5 +1,25 @@
 @import "tailwindcss";
 
+.head-tilt-timer-ring {
+  transition: stroke-dashoffset 1s linear;
+}
+
+@keyframes head-tilt-timer-heartbeat {
+  0%, 40%, 100% { transform: scale(1); }
+  15% { transform: scale(1.06); }
+  28% { transform: scale(1.02); }
+}
+
+.head-tilt-timer-heartbeat {
+  transform-origin: center;
+  animation: head-tilt-timer-heartbeat 1s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .head-tilt-timer-ring { transition: none; }
+  .head-tilt-timer-heartbeat { animation: none; }
+}
+
 @keyframes trash-pickup {
   0%, 40% {
     opacity: 1;

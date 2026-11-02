@@ -1,5 +1,18 @@
 # Kế hoạch tích hợp chế độ phân loại rác bằng cử động đầu
 
+## Cập nhật yêu cầu hiện tại
+
+Các yêu cầu sau thay thế mô tả dữ liệu, thời gian và phản hồi trong kế hoạch ban đầu bên dưới:
+
+- Hai lựa chọn là **Hữu cơ / Vô cơ**. Giữ ID nội bộ `organic | recyclable` để không ảnh hưởng mode khác; riêng mode camera, `recyclable` ánh xạ sang nhãn Vô cơ.
+- Dữ liệu riêng tại `src/data/headTiltTrashItems.ts`: 70 ảnh trong `public/images/camera/huu_co`, 90 ảnh trong `public/images/camera/vo_co`. Xáo trộn toàn bộ kho, không lặp trước khi hết kho; ván dài bắt đầu chu kỳ mới, tránh trùng ảnh liên tiếp ở ranh giới chu kỳ.
+- Mặc định **20 câu**; nhập số nguyên dương tại màn bắt đầu, cùng màn **Bật camera**. Câu hỏi dùng “Rác trong hình thuộc nhóm nào?” vì tên file ảnh chỉ là số thứ tự.
+- Câu hiện tại, điểm/ngôi sao, thanh hành trình và đồng hồ được gom lên **Header chung**, giữ nguyên vị trí trong cả lúc chơi và phản hồi. Cột trái không căn giữa toàn bộ bằng `my-auto`: câu hỏi nằm ngay dưới Header, tranh rác lớn trong thẻ nội dung, hai đáp án liền bên dưới; mobile vẫn giữ câu hỏi, camera và đáp án cùng viewport.
+- Đồng hồ là **huy hiệu cam/vàng ấm**, kích thước 64 px trên mobile, 80 px trên màn rộng; vòng vạch đứt lấy cảm hứng từ mẫu `watch.html`, dùng SVG mask riêng cho mỗi đồng hồ. Vạch giảm dần theo thời gian, chuyển hồng san hô và nhịp tim nhẹ khi còn 1–5 giây; tắt hiệu ứng khi đồng hồ dừng hoặc bật `prefers-reduced-motion`. Tại 0 giây, đồng hồ tĩnh màu cam, lời nhắc “Bé cứ chọn nhé, không cần vội!” nằm bên dưới thanh hành trình, không mang hình dáng nút bấm.
+- Đồng hồ trên Header đếm từ **10 xuống 0 giây** khi camera đã sẵn sàng. Từ **5 giây**, phát âm báo nhẹ **mỗi giây một lần**, kể cả sau khi về 0 và trong phản hồi, cho đến khi chuyển câu; nút tắt âm thanh áp dụng cả âm báo. Hết giờ vẫn chờ bé trả lời, không tự tính sai hay chuyển câu.
+- Tạm dừng, camera tắt/lỗi hoặc đang hiệu chỉnh thì dừng đồng hồ và âm báo. Tiếp tục giữ thời gian câu hiện tại; sang câu mới hoặc chơi lại reset về 10 giây.
+- Sau khi chọn, chỉ hiện phản hồi đúng/sai khích lệ trong **1,2 giây**, bỏ giải thích và đáp án chi tiết rồi tự chuyển câu.
+
 ## 1. Mục tiêu và ý tưởng
 
 Thêm một chế độ chơi mới để trẻ chọn thùng rác bằng cách nghiêng hoặc di chuyển đầu sang trái/phải. Đây là một màn chơi ngang hàng với **Lớp học**, **Sân trường**, **Khu vườn** và **Thử tài phân loại**, không phải modal/game phụ phủ lên màn chơi đang hoạt động. Trò chơi hiển thị lần lượt một món rác, hai lựa chọn **Hữu cơ** và **Tái chế**, phản hồi đáp án đúng/sai bằng hiệu ứng hình ảnh và âm thanh vui nhộn, rồi tự chuyển sang hình rác mới để chơi lượt tiếp theo.
