@@ -69,6 +69,14 @@ Trò chơi giáo dục dành cho học sinh lớp 1, giúp các em luyện phân
 
 Kiểm tra chuyển động: `node --import tsx --test tests/movement.test.ts tests/commandMovement.test.ts tests/mascotPosition.test.ts tests/mascotFrames.test.ts`.
 
+## Vui học tiếng Anh qua camera
+
+Chọn **Vui học tiếng Anh** trên thanh công cụ để mở hai chế độ: **Bàn Tay Bắt Chữ** (15 từ, mở tay rồi nắm để bắt bóng, mở tay trên giỏ để thả) và **Bé Cùng Vận Động** (5 động tác, giữ đúng tư thế 0,9 giây). Bắt sai được thử lại; hết 7 giây TPR sẽ làm mẫu và cho bé tiếp tục hoặc chuyển lượt, không trừ sao. Thoát, đổi chế độ hoặc ẩn tab đều dừng camera; bật lại tiếp tục ở lượt hiện tại.
+
+V1 dùng 28 tranh cục bộ thuộc ba chủ đề trường học, động vật và đồ ăn. Nguồn ảnh Twemoji/CC BY 4.0 được ghi trong [public/english/ATTRIBUTION.md](public/english/ATTRIBUTION.md). Tải lại tranh bằng `node scripts/download_english_illustrations.mjs`. Catalogue gốc được giữ nguyên. Mỗi ván có 15 từ mục tiêu không lặp, với các tranh gây nhiễu cùng chủ đề.
+
+Phát âm chỉ sử dụng giọng tiếng Anh **cục bộ** của thiết bị; nếu thiếu giọng, cần cài voice tiếng Anh trong hệ điều hành. Không dùng dịch vụ TTS online. Sleepy/Surprised được nhận diện bằng tư thế tay/đầu thay thế, không phân tích mắt nhắm hay khẩu hình. Độ chính xác với trẻ và hiệu năng máy tính bảng cần được nghiệm thu bằng webcam thực tế. Kiểm thử luật: `node --import tsx --test tests/englishGames.test.ts`.
+
 ## Yêu cầu
 
 - [Bun](https://bun.sh/) hoặc Node.js và npm.

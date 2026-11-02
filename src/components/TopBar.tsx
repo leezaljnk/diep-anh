@@ -11,6 +11,7 @@ interface TopBarProps {
   onOpenSortingGame: () => void;
   onOpenHeadTiltGame?: () => void;
   onOpenHandPickupGame?: () => void;
+  onOpenEnglishGame?: () => void;
   onOpenVoiceStudio: () => void;
   onOpenScratchModal: () => void;
   onOpenOfflineHtmlModal?: () => void;
@@ -37,6 +38,7 @@ export const TopBar: React.FC<TopBarProps> = ({
   onOpenSortingGame,
   onOpenHeadTiltGame,
   onOpenHandPickupGame,
+  onOpenEnglishGame,
   onOpenVoiceStudio,
   onOpenScratchModal,
   onOpenOfflineHtmlModal,
@@ -153,6 +155,12 @@ export const TopBar: React.FC<TopBarProps> = ({
             <span>Tự tay nhặt rác</span>
           </button>
         )}
+        {onOpenEnglishGame && <button
+          type="button"
+          onClick={onOpenEnglishGame}
+          className="flex min-h-10 items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-black text-rose-800 transition hover:bg-white focus-visible:outline focus-visible:outline-4 focus-visible:outline-rose-400"
+          title="Vui học tiếng Anh cùng Kiến Sáng"
+        ><Globe className="h-4 w-4" /><span>Vui học tiếng Anh</span></button>}
       </div>
 
       {/* Bộ đếm sao: 10 sao chiến thắng */}

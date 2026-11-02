@@ -71,6 +71,9 @@ const HeadTiltSortingGame = React.lazy(() =>
 const HandPickupGame = React.lazy(() =>
   import('./components/HandPickupGame').then(({ HandPickupGame: game }) => ({ default: game }))
 );
+const EnglishGameHub = React.lazy(() =>
+  import('./components/EnglishGameHub').then(({ EnglishGameHub: game }) => ({ default: game }))
+);
 const modalLoadingFallback = (
   <div role="status" className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/50 p-4 text-sm font-bold text-white">
     Đang mở cửa sổ…
@@ -102,6 +105,7 @@ export default function App() {
   const [isSortingGameOpen, setIsSortingGameOpen] = useState(false);
   const [isHeadTiltGameOpen, setIsHeadTiltGameOpen] = useState(false);
   const [isHandPickupGameOpen, setIsHandPickupGameOpen] = useState(false);
+  const [isEnglishGameOpen, setIsEnglishGameOpen] = useState(false);
   const [reuseSuggestion, setReuseSuggestion] = useState<{ instanceId: string; hint: ReuseHint } | null>(null);
   const sceneRef = useRef<GameScene>('classroom');
   const sceneItemsRef = useRef<Record<GameScene, ActiveTrashItem[] | null>>({
@@ -1204,7 +1208,7 @@ export default function App() {
       isTrashItemsModalOpen ||
       isOfflineHtmlModalOpen;
 
-    if (!gameReady || !hasStartedGame || isAnyModalOpen || isGardenOpen) {
+    if (!gameReady || !hasStartedGame || isAnyModalOpen || isGardenOpen || isEnglishGameOpen) {
       stopAllMovement();
       return;
     }
@@ -1277,6 +1281,7 @@ export default function App() {
     isTrashItemsModalOpen,
     isOfflineHtmlModalOpen,
     isGardenOpen,
+    isEnglishGameOpen,
     startMovingDir,
     stopMovingDir,
     stopAllMovement,
@@ -1564,7 +1569,7 @@ export default function App() {
         </div>
       )}
       {/* Thanh công cụ trên cùng */}
-      {!isGardenOpen && !isSortingGameOpen && !isHeadTiltGameOpen && !isHandPickupGameOpen && <TopBar
+      {!isGardenOpen && !isSortingGameOpen && !isHeadTiltGameOpen && !isHandPickupGameOpen && !isEnglishGameOpen && <TopBar
         readOnly={sharedAssetsEnabled}
         score={score}
         maxScore={MAX_SCORE}
@@ -1573,6 +1578,7 @@ export default function App() {
         onOpenSortingGame={() => setIsSortingGameOpen(true)}
         onOpenHeadTiltGame={window.location.protocol === 'file:' ? undefined : () => setIsHeadTiltGameOpen(true)}
         onOpenHandPickupGame={window.location.protocol === 'file:' ? undefined : () => setIsHandPickupGameOpen(true)}
+        onOpenEnglishGame={window.location.protocol === 'file:' ? undefined : () => setIsEnglishGameOpen(true)}
         onOpenVoiceStudio={() => setIsVoiceModalOpen(true)}
         onOpenScratchModal={() => setIsScratchModalOpen(true)}
         onOpenOfflineHtmlModal={() => setIsOfflineHtmlModalOpen(true)}
@@ -1601,7 +1607,11 @@ export default function App() {
 
       {/* KHUNG CẢNH LỚP HỌC CHÍNH */}
       <div ref={playAreaRef} className="relative flex-1 w-full h-full overflow-hidden">
-        {isHandPickupGameOpen ? (
+        {isEnglishGameOpen ? (
+          <React.Suspense fallback={modalLoadingFallback}>
+            <EnglishGameHub onExit={() => setIsEnglishGameOpen(false)} customMascotUrl={customMascotUrl} />
+          </React.Suspense>
+        ) : isHandPickupGameOpen ? (
           <React.Suspense fallback={modalLoadingFallback}>
             <HandPickupGame onExit={() => setIsHandPickupGameOpen(false)} customMascotUrl={customMascotUrl} voiceClips={voiceClips} />
           </React.Suspense>

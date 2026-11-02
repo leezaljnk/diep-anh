@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="100%" height="100%">
+  <rect width="100%" height="100%" rx="32" fill="#F59E0B" fill-opacity="0.12" />
+  <rect x="10" y="10" width="236" height="236" rx="26" fill="none" stroke="#F59E0B" stroke-width="6" stroke-dasharray="10 8" />
+  <text x="50%" y="46%" text-anchor="middle" dominant-baseline="central" font-family="system-ui, sans-serif" font-size="76" font-weight="bold" fill="#F59E0B">
+    C
+  </text>
+  <text x="50%" y="76%" text-anchor="middle" dominant-baseline="central" font-family="system-ui, sans-serif" font-size="26" font-weight="600" fill="#1E293B">
+    Car
+  </text>
+</svg>
