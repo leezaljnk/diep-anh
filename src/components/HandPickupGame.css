@@ -1,0 +1,111 @@
+.hand-game {
+  --hand-green: #167044;
+  --hand-sky: #177baa;
+  position: absolute;
+  inset: 0;
+  z-index: 45;
+  display: flex;
+  flex-direction: column;
+  background: #ecf8fc;
+  color: #163a38;
+  font-family: inherit;
+  isolation: isolate;
+}
+.hand-game button { cursor: pointer; }
+.hand-game button:disabled { cursor: wait; opacity: .65; }
+.hand-game button:focus-visible { outline: 3px solid #e5a610; outline-offset: 3px; }
+.hand-hud { display: flex; align-items: center; gap: 12px; padding: 10px 16px; background: #fff; border-bottom: 2px solid #b2dece; z-index: 4; }
+.hand-hud h1 { font-size: 20px; font-weight: 900; margin-right: auto; }
+.hand-icon { display: grid; place-items: center; width: 40px; height: 40px; flex: 0 0 40px; border-radius: 8px; background: #fff; color: #24534a; border: 1px solid #9ebfb7; }
+.hand-icon svg { width: 21px; height: 21px; }
+.hand-stars { display: flex; gap: 4px; color: #a9b6b1; }
+.hand-stars .earned { color: #b17700; fill: #ffd45b; }
+.hand-progress { width: 140px; height: 12px; accent-color: var(--hand-green); }
+.hand-score { display: flex; align-items: center; gap: 4px; font-weight: 800; white-space: nowrap; }
+.hand-stage { position: relative; flex: 1; min-height: 0; overflow: hidden; background: radial-gradient(ellipse at 50% 25%, #fff 0%, #e3f5fa 65%, #caebed 100%); }
+.hand-ground { position: absolute; bottom: 0; height: 29%; width: 100%; background: #d0e9b0; border-top: 4px solid #aacd83; }
+.hand-preview { position: absolute; top: 16px; left: 16px; width: 144px; aspect-ratio: 4/3; z-index: 3; border: 3px solid #d6a526; border-radius: 8px; overflow: hidden; background: #25453d; }
+.hand-preview[data-tracking="found"] { border-color: #25875b; }
+.hand-preview video { width: 100%; height: 100%; object-fit: fill; transform: scaleX(-1); }
+.hand-preview span { position: absolute; bottom: 0; left: 0; right: 0; text-align: center; color: white; background: #163a38df; padding: 3px; font-size: 11px; }
+.hand-preview.preview-hidden { opacity: 0; pointer-events: none; }
+.hand-camera-controls { position: absolute; right: 16px; top: 16px; display: flex; gap: 8px; z-index: 5; }
+.hand-status { position: absolute; left: 22%; right: 22%; top: 16px; text-align: center; font-size: 17px; line-height: 1.45; font-weight: 700; z-index: 3; }
+.hand-item { position: absolute; width: 120px; height: 120px; max-width: 24%; max-height: 24%; transform: translate(-50%, -50%); display: grid; place-items: center; z-index: 3; border-radius: 50%; transition: box-shadow .2s; }
+.hand-item img, .hand-item > span { width: 100%; height: 100%; object-fit: contain; display: grid; place-items: center; filter: drop-shadow(0 8px 7px #29493822); }
+.hand-item.nearby { box-shadow: 0 0 0 5px #e7b93b, 0 0 32px #fff; background: #ffffff9c; }
+.hand-item.held { width: 88px; height: 88px; }
+.hand-item.sorted { animation: hand-sort 1s ease-in forwards; }
+.hand-item.retry { animation: hand-retry .45s ease-out; }
+.hand-cursor { position: absolute; transform: translate(-50%, -50%); z-index: 6; pointer-events: none; width: 68px; height: 76px; display: grid; place-items: center; }
+.hand-illustration { display: inline-grid; place-items: center; width: 100%; height: 100%; transform-origin: 50% 85%; filter: drop-shadow(0 2px 1px #80532a26); }
+.hand-illustration svg { width: 100%; height: 100%; overflow: visible; }
+.hand-illustration.open { animation: hand-wave 2.6s ease-in-out infinite; }
+.hand-illustration.grip { animation: hand-grip .28s ease-out both; }
+.hand-held-check { position: absolute; right: -3px; top: -3px; background: #167044; color: #fff; border-radius: 50%; }
+.hand-bin { position: absolute; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; z-index: 2; color: var(--hand-green); transition: filter .2s; }
+.hand-bin.recyclable { color: var(--hand-sky); }
+.hand-bin > img, .hand-bin > span:not(.hand-bin-rim) { width: 100%; height: 100%; object-fit: contain; display: grid; place-items: center; }
+.hand-bin-rim { position: absolute; top: 1%; width: 34%; max-width: 100px; height: 9%; border: 2px dashed currentColor; border-radius: 50%; opacity: 0; transition: opacity .2s; background: #fff8; }
+.hand-bin.bin-active { filter: drop-shadow(0 0 12px #f9cd50); }
+.hand-bin.bin-active .hand-bin-rim { opacity: 1; }
+.hand-confetti { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 7; }
+.hand-welcome { position: absolute; top: 3%; left: 15%; right: 15%; height: 58%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; text-align: center; z-index: 4; }
+.hand-mascot { height: 105px; width: 105px; object-fit: contain; display: grid; place-items: center; }
+.hand-welcome h2 { font-size: 26px; font-weight: 900; line-height: 1.2; }
+.hand-gesture-demo { display: flex; align-items: center; gap: 18px; font-size: 30px; color: #217962; }
+.hand-gesture-demo .hand-illustration { width: 38px; height: 42px; }
+.hand-gesture-demo > :nth-child(3) { animation: hand-demo 2.4s ease-in-out infinite; }
+.hand-count { display: flex; align-items: center; gap: 12px; font-size: 15px; font-weight: 700; }
+.hand-count input { width: 88px; height: 40px; border: 1px solid #88b5a6; border-radius: 6px; background: #fff; padding: 6px 10px; font: inherit; text-align: center; }
+.hand-count input:focus-visible { outline: 3px solid #e5a610; outline-offset: 2px; }
+.hand-count input[aria-invalid="true"] { border-color: #b83c35; }
+.hand-count-error { font-size: 12px; color: #a62e28; }
+.hand-primary, .hand-secondary { display: flex; align-items: center; justify-content: center; gap: 8px; border-radius: 8px; padding: 12px 20px; font-size: 17px; font-weight: 800; max-width: 100%; }
+.hand-primary { background: #167044; color: #fff; box-shadow: 0 4px 0 #0d4f2e; }
+.hand-primary:hover { background: #0d5d37; }
+.hand-secondary { color: #225d50; background: white; border: 1px solid #88b5a6; }
+.hand-welcome p { font-size: 12px; max-width: 390px; line-height: 1.4; }
+.hand-pause { position: absolute; z-index: 5; inset: 20% 12% 40%; background: #fffffff2; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 14px; text-align: center; padding: 12px; }
+.hand-pause h2 { font-weight: 800; font-size: 20px; }
+.hand-error { position: absolute; z-index: 8; bottom: 4px; left: 8px; right: 8px; padding: 10px 14px; background: #fff0ef; color: #9f2927; border: 1px solid #e5a09c; border-radius: 8px; font-size: 14px; text-align: center; }
+.hand-final-score { display: flex; align-items: center; gap: 14px; font-size: 26px; color: #916000; font-weight: 900; }
+.hand-final-score svg { fill: #ffd45b; }
+.hand-modal-backdrop { position: absolute; inset: 0; z-index: 12; background: #102b2599; display: grid; place-items: center; padding: 20px; }
+.hand-exit-dialog { display: flex; flex-direction: column; gap: 16px; border-radius: 8px; padding: 28px; background: #fff; width: min(100%, 370px); }
+.hand-exit-dialog h2 { font-size: 22px; font-weight: 800; }
+.hand-loading { animation: hand-spin 1s linear infinite; }
+@keyframes hand-spin { to { transform: rotate(360deg); } }
+@keyframes hand-sort { to { transform: translate(-50%, 60%) scale(.1); opacity: 0; } }
+@keyframes hand-retry { 25% { transform: translate(-60%, -50%) rotate(-8deg); } 75% { transform: translate(-40%, -50%) rotate(8deg); } }
+@keyframes hand-demo { 50% { transform: translateY(-5px); } }
+@keyframes hand-wave { 0%, 100% { transform: rotate(-5deg); } 50% { transform: rotate(5deg) translateY(-2px); } }
+@keyframes hand-grip { 0% { transform: scale(1.1) rotate(-7deg); } 65% { transform: scale(.92) rotate(3deg); } 100% { transform: scale(1) rotate(0); } }
+@media (max-width: 600px) {
+  .hand-hud { gap: 7px; padding: 8px; flex-wrap: wrap; }
+  .hand-hud h1 { font-size: 17px; }
+  .hand-stars { order: 5; width: 100%; justify-content: center; }
+  .hand-preview { top: 8px; left: 8px; width: 88px; }
+  .hand-preview span { font-size: 9px; }
+  .hand-camera-controls { top: 8px; right: 8px; gap: 5px; }
+  .hand-status { top: 86px; left: 8%; right: 8%; font-size: 14px; }
+  .hand-welcome { left: 5%; right: 5%; top: 10%; height: 49%; gap: 10px; }
+  .hand-welcome h2 { font-size: 22px; }
+  .hand-mascot { width: 80px; height: 80px; }
+  .hand-primary, .hand-secondary { font-size: 15px; padding: 10px 14px; }
+  .hand-cursor { width: 58px; height: 64px; }
+}
+@media (max-height: 540px) {
+  .hand-welcome { top: 0; height: 61%; gap: 6px; }
+  .hand-mascot { display: none; }
+  .hand-welcome h2 { font-size: 20px; }
+  .hand-gesture-demo { font-size: 24px; }
+  .hand-gesture-demo .hand-illustration { width: 27px; height: 30px; }
+  .hand-welcome p { max-width: 450px; }
+  .hand-preview { width: 88px; }
+  .hand-status { top: 12px; left: 24%; right: 24%; font-size: 14px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hand-game *, .hand-game *::before, .hand-game *::after { animation: none !important; transition: none !important; }
+  .hand-item.sorted { opacity: 0; }
+}

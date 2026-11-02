@@ -156,6 +156,14 @@ export const playVictoryFanfare = () => {
 
 let currentAudio: HTMLAudioElement | null = null;
 
+export const stopKienSangSpeech = () => {
+  if (currentAudio) {
+    currentAudio.pause();
+    currentAudio = null;
+  }
+  window.speechSynthesis?.cancel();
+};
+
 /**
  * Play a voice message:
  * 1. If child recorded custom audio for this action, play child's voice!
@@ -166,11 +174,7 @@ export const speakKienSang = (
   customAudioUrl?: string | null,
   onEnded?: () => void
 ) => {
-  if (currentAudio) {
-    currentAudio.pause();
-    currentAudio = null;
-  }
-  window.speechSynthesis?.cancel();
+  stopKienSangSpeech();
   // If custom audio provided
   if (customAudioUrl) {
     try {

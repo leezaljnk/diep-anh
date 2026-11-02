@@ -8,11 +8,11 @@ import { SORTING_GAME_WASTES } from '../src/data/sortingGame';
 import { sharedAssetsToState } from '../src/utils/sharedAssets';
 import { embedOfflineAssets } from '../src/utils/offlineAssets';
 import { parseSettingsFile } from '../src/utils/settingsTransfer';
-import { speakKienSang } from '../src/utils/audio';
+import { speakKienSang, stopKienSangSpeech } from '../src/utils/audio';
 
-test('98 unique recording IDs cover all scenes and have exact scripts documented', () => {
+test('106 unique recording IDs cover all scenes and have exact scripts documented', () => {
   const catalog = readFileSync(new URL('../docs/voice-prompts.md', import.meta.url), 'utf8');
-  assert.equal(VOICE_PROMPTS.length, 98);
+  assert.equal(VOICE_PROMPTS.length, 106);
   assert.equal(new Set(VOICE_PROMPTS.map(p => p.id)).size, VOICE_PROMPTS.length);
   for (const prompt of VOICE_PROMPTS) {
     assert.match(prompt.id, /^[a-z0-9_]+$/);
@@ -31,7 +31,7 @@ test('98 unique recording IDs cover all scenes and have exact scripts documented
 });
 
 test('every speech/feedback call passes an explicit ID, and literal text matches that ID', () => {
-  for (const path of ['App.tsx', 'components/SunlitGardenGame.tsx', 'components/ReuseSortingGame.tsx', 'components/HeadTiltSortingGame.tsx']) {
+  for (const path of ['App.tsx', 'components/SunlitGardenGame.tsx', 'components/ReuseSortingGame.tsx', 'components/HandPickupGame.tsx', 'components/HeadTiltSortingGame.tsx']) {
     const source = readFileSync(new URL(`../src/${path}`, import.meta.url), 'utf8');
     const calls = [...source.matchAll(/\b(?:triggerSpeech|showFeedback)\(/g)];
     assert(calls.length > 0, path);
@@ -69,6 +69,34 @@ test('every speech/feedback call passes an explicit ID, and literal text matches
       }
     }
     assert(!source.includes('voiceIdForText('), 'Playback must not infer recording IDs from text');
+  }
+});
+
+test('stopping speech pauses a recording, cancels TTS, and can be repeated', () => {
+  const keys = ['window', 'Audio'] as const;
+  const descriptors = keys.map(key => Object.getOwnPropertyDescriptor(globalThis, key));
+  let paused = 0;
+  let cancelled = 0;
+  Object.assign(globalThis, {
+    window: { speechSynthesis: { cancel: () => { cancelled++; } } },
+    Audio: class {
+      pause() { paused++; }
+      play() { return Promise.resolve(); }
+    },
+  });
+  try {
+    speakKienSang('Test', 'recording.mp3');
+    const initial = cancelled;
+    stopKienSangSpeech();
+    stopKienSangSpeech();
+    assert.equal(paused, 1);
+    assert.equal(cancelled, initial + 2);
+  } finally {
+    keys.forEach((key, index) => {
+      const descriptor = descriptors[index];
+      if (descriptor) Object.defineProperty(globalThis, key, descriptor);
+      else Reflect.deleteProperty(globalThis, key);
+    });
   }
 });
 

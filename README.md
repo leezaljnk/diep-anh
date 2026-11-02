@@ -46,6 +46,7 @@ Trò chơi giáo dục dành cho học sinh lớp 1, giúp các em luyện phân
 - Ở lớp học và sân trường, lời thoại của Kiến Sáng được phát bằng âm thanh mà không hiện bong bóng chữ.
 - Đạt **10 sao** để chiến thắng. Rác xuất hiện ngoài vùng thùng rác với khoảng cách an toàn để dễ chọn/nhặt.
 - Chơi bằng cách tự kéo thả rác hoặc chọn rác để Robot Kiến Sáng đi nhặt.
+- Màn **Tự tay nhặt rác** dùng camera nhận diện một bàn tay: mở tay tìm rác, nắm để nhặt, giữ tay nắm khi di chuyển và mở tay trên thùng **Hữu cơ / Vô cơ** để thả. Nhập từ 2–160 món ở màn bật camera (mặc định 5), không trùng và luôn có cả hai nhóm. Từng món hiện ở vị trí ngẫu nhiên trong vùng giữa, cách xa hai thùng. Thả sai hoặc ngoài thùng được thử lại tại vị trí ban đầu, không trừ điểm. Mất tay thì món rác trở về chỗ cũ; cần mở tay trước khi nhặt lại. Có gợi ý bằng giọng nói, ẩn preview, tắt tiếng và xác nhận thoát. Khi chuyển tab, camera dừng và có thể bật lại để tiếp tục ván.
 - Màn **Nghiêng đầu phân loại rác** dùng ảnh ngẫu nhiên từ `public/images/camera/huu_co` và `public/images/camera/vo_co`, với hai lựa chọn **Hữu cơ / Vô cơ**. Mặc định 20 câu, có thể nhập số nguyên dương tại màn bật camera. Ảnh không lặp cho đến khi dùng hết kho; ván dài sẽ xáo lại kho ảnh. Mỗi câu đếm ngược 10 giây sau khi camera hiệu chỉnh xong; từ 5 giây phát tiếng báo nhẹ mỗi giây, kể cả khi về 0, cho đến khi sang câu khác (nếu bật âm thanh). Hết giờ không tính sai hay tự chuyển câu; tạm dừng hoặc camera ngắt thì đồng hồ và âm báo dừng. Sau khi chọn chỉ hiện đúng/sai ngắn trong 1,2 giây, không giải thích đáp án.
 - Mở màn chơi riêng **Thử tài phân loại rác** để nối một món đồ cũ với các ý tưởng tái sử dụng. Mỗi ván có 5 lượt không lặp; mỗi lượt gồm 6 tranh, nút kiểm tra, cơ hội sửa đáp án và tiến độ riêng. Có thể chạm để chọn hoặc kéo trên máy tính; những ý tưởng cần gia công đều nhắc bé nhờ người lớn hỗ trợ.
 - Hướng dẫn nằm trên bảng phấn: giữ phím mũi tên / WASD để di chuyển Kiến Sáng, Space / Enter để nhặt hoặc thả rác. Không hiển thị D-pad trên sàn chơi hay mã trang phục dưới nhân vật.
@@ -72,6 +73,8 @@ Kiểm tra chuyển động: `node --import tsx --test tests/movement.test.ts te
 
 - [Bun](https://bun.sh/) hoặc Node.js và npm.
 - Trình duyệt web hiện đại.
+
+Các màn camera cần **HTTPS hoặc localhost** và quyền truy cập camera; không xuất hiện trong bản HTML mở bằng `file:`. Hình ảnh camera và điểm mốc nhận diện chỉ được xử lý trên thiết bị, không lưu hoặc tải lên máy chủ. MediaPipe, WASM và model được phục vụ từ dự án; model tay chỉ tải khi bấm bắt đầu. Model Hand Landmarker float16 phiên bản 1 tại `public/models/hand_landmarker.task` lấy từ [kho model MediaPipe chính thức](https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task). Kiểm thử luật bàn tay: `node --import tsx --test tests/handPickup.test.ts`.
 
 Không cần API key nếu chỉ chơi bằng tài nguyên trong project. Chế độ dùng chung online cần cấu hình Supabase như bên dưới.
 

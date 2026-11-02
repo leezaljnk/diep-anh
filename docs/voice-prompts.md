@@ -1,6 +1,6 @@
-# Danh sách ID và lời thoại cho cả 4 màn chơi
+# Danh sách ID và lời thoại cho các màn chơi
 
-Có **98 ID**. Nguồn chuẩn: [voicePrompts.ts](../src/data/voicePrompts.ts).
+Có **106 ID**. Nguồn chuẩn: [voicePrompts.ts](../src/data/voicePrompts.ts).
 Tạo lại danh sách bằng `node --import tsx scripts/generate_voice_catalog.ts`.
 
 - Mỗi lệnh gọi `triggerSpeech(text, voiceId)` truyền ID tường minh; không dò ID theo nội dung khi phát hoặc nghe lại.
@@ -10,6 +10,7 @@ Tạo lại danh sách bằng `node --import tsx scripts/generate_voice_catalog.
 - Phải thu lại `victory.mp3` theo mốc **20 sao** và các câu đã đổi nội dung (đặc biệt `batch_complete.mp3`, `approach_bin.mp3`, `approach_trash.mp3`); file cũ không tự đổi tiếng nói.
 - Ba câu khen đúng dùng ba ID riêng để bản thu khớp văn bản; không dùng chung `correct.mp3` cho câu khác nữa.
 - Khu vườn đọc kết quả cố định bằng `garden_victory`; số điểm biến thiên vẫn hiển thị riêng trên màn hình, không nằm trong bản thu.
+- Thu lại `hand_pickup_victory.mp3` nếu đã có bản cũ: câu mới nói "tất cả món rác" để phù hợp với số món tùy nhập.
 - Thử tài phân loại tự đọc hướng dẫn, phản hồi nối/gỡ/kiểm tra, chuyển lượt và hoàn thành. Lời nhắc an toàn có nút bấm để nghe. Giữ phản hồi hoàn thành lượt 4,5 giây trước khi chuyển lượt để hạn chế ngắt câu.
 - `continue_sorting` và `play_area_small` là trạng thái lời nhắc thụ động ở màn chính: có ID lưu cùng lời thoại nhưng không tự phát. Bong bóng và nút nghe lại của robot màn chính hiện đang ẩn; callback nghe lại đã giữ ID tường minh, không thay đổi bố cục để bật lại nút. `selected_unknown` / `picked_unknown` là dự phòng khi thiếu định nghĩa món rác.
 - Danh mục là **lời nói/hướng dẫn/phản hồi**, không phải mọi nhãn nút, tên vật phẩm, văn bản mô tả ảnh, thẻ gợi ý tái sử dụng hoặc hiệu ứng âm thanh.
@@ -136,3 +137,16 @@ Tạo lại danh sách bằng `node --import tsx scripts/generate_voice_catalog.
 | `sorting_selected_vo_hop` | `sorting_selected_vo_hop.mp3` | Đã chọn Vỏ hộp giấy. Bé chạm vào những ý tưởng phù hợp nhé! |
 | `sorting_selected_vo_lon` | `sorting_selected_vo_lon.mp3` | Đã chọn Vỏ lon. Bé chạm vào những ý tưởng phù hợp nhé! |
 | `sorting_selected_vo_lop` | `sorting_selected_vo_lop.mp3` | Đã chọn Lốp xe cũ. Bé chạm vào những ý tưởng phù hợp nhé! |
+
+## Tự tay nhặt rác (8 ID)
+
+| ID | Tên file | Lời thoại cần thu |
+|---|---|---|
+| `hand_pickup_intro` | `hand_pickup_intro.mp3` | Đưa bàn tay mở đến món rác, nắm lại để nhặt rồi mở tay trên thùng nhé! |
+| `hand_pickup_retry_organic` | `hand_pickup_retry_organic.mp3` | Thử lại nhé! Món này thuộc nhóm Hữu cơ. |
+| `hand_pickup_retry_inorganic` | `hand_pickup_retry_inorganic.mp3` | Thử lại nhé! Món này thuộc nhóm Vô cơ. |
+| `hand_pickup_miss` | `hand_pickup_miss.mp3` | Chưa tới thùng rồi, con thử lại nhé! |
+| `hand_pickup_hint` | `hand_pickup_hint.mp3` | Đưa bàn tay mở tới món rác rồi nắm lại nhé! |
+| `hand_pickup_drop_organic` | `hand_pickup_drop_organic.mp3` | Mở tay ở thùng Hữu cơ nhé! |
+| `hand_pickup_drop_inorganic` | `hand_pickup_drop_inorganic.mp3` | Mở tay ở thùng Vô cơ nhé! |
+| `hand_pickup_victory` | `hand_pickup_victory.mp3` | Tuyệt vời! Con đã dọn sạch tất cả món rác! |

@@ -10,6 +10,7 @@ returns boolean language sql immutable set search_path = '' as $$
     or asset_id ~ '^voice/garden_(intro|free|challenge|hazard|game_over|victory)$'
     or asset_id ~ '^voice/sorting_(intro|start|removed|connected|select|retry|round_complete|more|continue|safety|victory)$'
     or asset_id ~ '^voice/sorting_selected_(cd|chai_nhua|cuon_giay|giay_vun|hop_giay|tat_cu|vo_chai|vo_hop|vo_lon|vo_lop)$'
+    or asset_id ~ '^voice/hand_pickup_(intro|retry_organic|retry_inorganic|miss|hint|drop_organic|drop_inorganic|victory)$'
     or asset_id ~ '^images/costumes/tim_rac_(0[1-9]|1[0-5])$'
     or asset_id ~ '^images/costumes/(vui|buon)_0[1-4]$'
     or asset_id ~ '^images/costumes/cam_(gio|hopsua|hopgiay|giaycu|vochai|ongnhua|vokeo|volon|vochainhua|xuongca|duiga|voduahau|banh_mi|lacay|vochuoi|votao)_(0[1-9]|1[0-2])$'
